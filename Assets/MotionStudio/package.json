@@ -1,0 +1,19 @@
+{
+    "name": "com.motionstudio.ui",
+    "displayName": "Motion Studio",
+    "version": "1.0.0",
+    "unity": "2022.3",
+    "description": "Ordered, soft UI motion: fade and slide in, word by word text, card reveals from a line, shaped glow, and icons that build themselves. No dependencies.",
+    "keywords": [
+        "ui",
+        "animation",
+        "motion",
+        "text",
+        "card",
+        "glow",
+        "sequence"
+    ],
+    "author": {
+        "name": "Motion Studio"
+    }
+}

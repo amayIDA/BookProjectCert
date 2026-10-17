@@ -834,7 +834,25 @@ PlayerSettings:
   webWasm2023: 1
   webEnableSubmoduleStrippingCompatibility: 0
   webProgressiveAssetLoading: 0
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    Android: DOTWEEN
+    EmbeddedLinux: DOTWEEN
+    GameCoreScarlett: DOTWEEN
+    GameCoreXboxOne: DOTWEEN
+    Kepler: DOTWEEN
+    LinuxHeadlessSimulation: DOTWEEN
+    Nintendo Switch: DOTWEEN
+    Nintendo Switch 2: DOTWEEN
+    PS4: DOTWEEN
+    PS5: DOTWEEN
+    QNX: DOTWEEN
+    Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY;DOTWEEN
+    VisionOS: DOTWEEN
+    WebGL: DOTWEEN
+    Windows Store Apps: DOTWEEN
+    XboxOne: DOTWEEN
+    iPhone: DOTWEEN
+    tvOS: DOTWEEN
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
@@ -935,11 +953,11 @@ PlayerSettings:
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
   enableDirectStorage: 0
-  cloudProjectId: 
+  cloudProjectId: d046015f-6aef-46a5-80f8-de686858c29f
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 
-  organizationId: 
+  projectName: BookProject
+  organizationId: amaymu29wwfu
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

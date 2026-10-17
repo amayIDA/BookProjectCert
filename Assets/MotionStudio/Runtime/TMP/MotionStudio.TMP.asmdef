@@ -1,0 +1,31 @@
+{
+    "name": "MotionStudio.TMP",
+    "rootNamespace": "MotionStudio",
+    "references": [
+        "MotionStudio.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "MOTIONSTUDIO_TMP"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0.0",
+            "define": "MOTIONSTUDIO_TMP"
+        },
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "1.0.0",
+            "define": "MOTIONSTUDIO_TMP"
+        }
+    ],
+    "noEngineReferences": false
+}
