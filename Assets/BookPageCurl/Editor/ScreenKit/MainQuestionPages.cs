@@ -27,9 +27,9 @@ namespace ScreenKit
             new[] { "GENERAL ENGLISH", "PRE-BEGINNER/BEGINNER", "Literacy and workplace readiness from day one, with a clear pathway upward." },
             new[] { "GENERAL ENGLISH", "L2/ SPEAKING A1", "Staff join conversations instead of just following them, which means fewer errors and fewer escalations to supervisors." },
             new[] { "WORKPLACE", "WRITING A2", "Clear, professional workplace documents from the first draft." },
-            new[] { "SERVICE COMMUNICATION", "PHONE AND FRONT DESK", "Consistent, courteous phone manner and customer handling that people notice." },
-            new[] { "SALES ENGLISH", "PRODUCTS AND CLOSING", "Explain products with confidence, handle objections and close the sale in English." },
-            new[] { "SERVICE LANGUAGE STANDARD", "SITES AND SECTORS", "One shared language framework, so every team serves customers the same way." },
+            new[] { "ENGLISH FOR", "CUSTOMER CARE", "Better satisfaction and retention, with a consistent service voice." },
+            new[] { "ENGLISH FOR", "SALES & MARKETING", "Stronger sales performance and confident customer conversations." },
+            new[] { "", "BESPOKE", "One framework, sector-specific delivery, and KPIs defined with the client." },
             new[] { "HR ENGLISH", "DOCUMENTATION AND INTERVIEWS", "Precise written records, structured interviews and sensitive employee conversations." },
             new[] { "OFFICE ENGLISH", "MEETINGS AND COORDINATION", "Run meetings, work with systems and coordinate in writing without friction." },
             new[] { "INTERVIEW READINESS", "CANDIDATES AND PROMOTION", "Targeted practice that turns interview-stage nerves into a confident performance." },
@@ -107,7 +107,7 @@ namespace ScreenKit
             s.Glow(card, 0.6f, 0.55f, 0.51f, 1f, Beat.Glow);
 
             string[] words = Content[index];
-            TMP_Text programme = s.Text(card, "Programme", words[0] + "\n<color=#8C9BFF>" + words[1] + "</color>", st.regular, 66, st.white, 0.035f, 0.56f, 0.88f, 0.95f, TextAlignmentOptions.MidlineLeft);
+            TMP_Text programme = s.Text(card, "Programme", (words[0].Length > 0 ? words[0] + "\n" : "") + "<color=#8C9BFF>" + words[1] + "</color>", st.regular, 66, st.white, 0.035f, 0.56f, 0.88f, 0.95f, TextAlignmentOptions.MidlineLeft);
             programme.characterSpacing = 8f; programme.lineSpacing = -6f;
             Fx.Words(programme.gameObject, MotionDirection.Bottom, 40f, Beat.Content, 0.09f, 0.6f, true);
             s.Icon(card, "Scenario icon", ScenarioIcons[scenario], 0.962f, 0.86f, 64f, st.white, Beat.Content + 0.2f);
