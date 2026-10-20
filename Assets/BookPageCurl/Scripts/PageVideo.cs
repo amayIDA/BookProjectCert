@@ -58,6 +58,7 @@ public class PageVideo : MonoBehaviour
         Prepare();
         frameShown = false;
         player.Stop();
+        player.sendFrameReadyEvents = true;
         player.Prepare();
         while (!player.isPrepared)
             yield return null;
