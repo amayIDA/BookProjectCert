@@ -109,6 +109,9 @@ public class BookScreens : MonoBehaviour
     bool controlsDirty;
     bool sidesStay;
     bool rightFollows;
+    int rightPageOverride = -1;
+    [Tooltip("Page shown on the right canvas when Begin Here is pressed (the book video page). The first page is 0.")]
+    public int beginHereRightPage = 2;
     bool beginHereMode;
     bool scenariosShown;
     bool scenarioPending;
@@ -490,7 +493,7 @@ public class BookScreens : MonoBehaviour
             ActivateOnly(sceneRight, index);
         }
         else if (rightFollows)
-            ActivateOnly(sceneRight, index);
+            ActivateOnly(sceneRight, rightPageOverride >= 0 ? rightPageOverride : index);
         ActivateOnly(sceneBook, index);
         RaisePagePanels();
     }
@@ -1371,6 +1374,7 @@ public class BookScreens : MonoBehaviour
             return;
         CancelPending();
         rightFollows = false;
+        rightPageOverride = -1;
         scenarioPending = false;
 
         // after Begin Here, turning the page shows the scenario lists on the left and right canvas
@@ -1413,8 +1417,10 @@ public class BookScreens : MonoBehaviour
             || string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase))
         {
             // Get In Touch also puts the thank you screen on the right canvas, the left canvas stays
-            rightFollows = string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase);
-            beginHereMode = string.Equals(id, "Begin Here", System.StringComparison.OrdinalIgnoreCase);
+            bool begin = string.Equals(id, "Begin Here", System.StringComparison.OrdinalIgnoreCase);
+            rightFollows = begin || string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase);
+            rightPageOverride = begin ? beginHereRightPage : -1;
+            beginHereMode = begin;
             TurnMainOnly(step);
             return;
         }
