@@ -133,6 +133,8 @@ public class BookScreens : MonoBehaviour
     bool scenarioPending;
     [Tooltip("Index of the left and right pages (the Begin Here scenario lists) shown when the page is turned after Begin Here. The first page is 0.")]
     public int scenarioPage = 7;
+    const int FirstDetailPage = 8;
+    static readonly string[] ScenarioNames = { "Entry Level", "Frontline", "Functional", "Managers", "Executives" };
     int lastTargetPage = -1;
     Coroutine mainTwice;
     Vector2 pressPosition;
@@ -453,6 +455,9 @@ public class BookScreens : MonoBehaviour
 
     int PageCount()
     {
+        // the main pages; the spread has more pages (the scenario details) than the main canvas
+        if (sceneBook.Length > 0)
+            return sceneBook.Length;
         if (sceneLeft.Length > 0)
             return sceneLeft.Length;
         return steps.Count;
@@ -511,7 +516,7 @@ public class BookScreens : MonoBehaviour
     /// <summary>Shows these pages on the spread right now and keeps the page curl book on the same spread.</summary>
     void SetSides(int left, int right)
     {
-        int count = Mathf.Max(1, PageCount());
+        int count = Mathf.Max(1, sceneLeft.Length);
         left = Mathf.Clamp(left, 0, count - 1);
         right = Mathf.Clamp(right, 0, count - 1);
         bool rightChanged = right != rightIndex;
@@ -1180,8 +1185,13 @@ public class BookScreens : MonoBehaviour
                 return;
             if (next)
             {
-                if (leftIndex + 1 < PageCount())
+                if (leftIndex >= FirstDetailPage && leftIndex + 1 < sceneLeft.Length)
                     TurnSidesTo(leftIndex + 1);
+            }
+            else if (leftIndex >= FirstDetailPage)
+            {
+                // back from a scenario to the lists
+                TurnSidesBack(scenarioPage, scenarioPage);
             }
             else if (leftIndex > ButtonsPage)
             {
@@ -1547,8 +1557,8 @@ public class BookScreens : MonoBehaviour
             // after any other button on the spread: only the spread turns, the main page stays as it is
             if (contextRow.Length > 0)
             {
-                // only Begin Here lets the user turn the spread
-                if (contextRow == "Begin Here")
+                // only Begin Here lets the user turn the spread, from one scenario detail to the next
+                if (contextRow == "Begin Here" && leftIndex >= FirstDetailPage && leftIndex + 1 < sceneLeft.Length)
                     TurnSidesTo(leftIndex + 1);
                 return;
             }
@@ -1558,6 +1568,14 @@ public class BookScreens : MonoBehaviour
             if (next >= PageCount())
                 return;
             ShowStep(next, Selection(next), true);
+            return;
+        }
+
+        // a scenario on the Begin Here lists turns the whole spread to its detail pages
+        int detail = System.Array.IndexOf(ScenarioNames, id);
+        if (detail >= 0 && scenariosShown && leftIndex == scenarioPage)
+        {
+            TurnSidesTo(FirstDetailPage + detail);
             return;
         }
 
