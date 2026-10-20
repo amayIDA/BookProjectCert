@@ -131,6 +131,8 @@ public class BookScreens : MonoBehaviour
     Sprite[] stationaryMain;
     int flowPages;
     bool questionOpen;
+    bool riffling;
+    readonly List<RiffleStash> riffleStash = new List<RiffleStash>();
     int closingIndex = -1;
     int lastDetail = -1;
     bool beginHereMode;
@@ -242,6 +244,8 @@ public class BookScreens : MonoBehaviour
 
     void Update()
     {
+        if (riffling)
+            return;
         TrackSwipe();
         if (scenarioPending)
         {
@@ -1572,7 +1576,7 @@ public class BookScreens : MonoBehaviour
 
     void Press(ButtonAction action, int step, string id)
     {
-        if (swipeGesture)
+        if (swipeGesture || riffling)
             return;
 
         // Begin Here again plays its page once more: the video and the text come in again
@@ -1595,6 +1599,9 @@ public class BookScreens : MonoBehaviour
 
         if (action == ButtonAction.Home)
         {
+            // Home turns the pages back to the beginning on both screens, instead of jumping there
+            if (StartRiffle())
+                return;
             beginHereMode = false;
             scenariosShown = false;
             contextRow = "";
@@ -1785,6 +1792,159 @@ public class BookScreens : MonoBehaviour
         ActivateOnly(sceneBook, page);
         RaisePagePanels();
         StartCoroutine(FadePageIn(sceneBook[page]));
+    }
+
+    struct RiffleStash
+    {
+        public int slot;
+        public Sprite left;
+        public Sprite right;
+    }
+
+    /// <summary>How many sheets fly past on the way back to the beginning (the spread), and the seconds each one takes.</summary>
+    const int RiffleMaxSheets = 5;
+    const float RiffleSheetSeconds = 0.3f;
+
+    /// <summary>Starts the page riffle back to the cover. Returns false when both screens are already at the beginning.</summary>
+    bool StartRiffle()
+    {
+        if (spreadBook == null || spreadSwipe == null || book == null || swipe == null || leftBaked == null)
+            return false;
+        int mainStep = Mathf.Clamp((book.currentPage - 1) / 2, 0, PageCount() - 1);
+        if (leftIndex <= 0 && mainStep <= 0 && !questionOpen)
+            return false;
+        CancelPending();
+        StartCoroutine(Riffle());
+        return true;
+    }
+
+    /// <summary>
+    /// Both screens turn their pages back, many sheets in a row and in the reading direction back (the left page lifts over the spine),
+    /// so going Home feels like leafing back to the front of the book. The spread dresses each landing spot with pages on the way
+    /// back to the cover, the main canvas turns back through its own pages.
+    /// </summary>
+    IEnumerator Riffle()
+    {
+        riffling = true;
+        lastPressedId = "";
+        beginHereMode = false;
+        scenariosShown = false;
+        contextRow = "";
+        sidesStay = false;
+        questionOpen = false;
+
+        float oldSpreadSeconds = spreadSwipe.flipDuration;
+        float oldMainSeconds = swipe.flipDuration;
+        BookSwipe[] oldLinked = swipe.alsoFlip;
+        spreadSwipe.flipDuration = RiffleSheetSeconds;
+        swipe.flipDuration = RiffleSheetSeconds;
+        swipe.alsoFlip = null;
+
+        int slot = Mathf.Max(0, leftIndex);
+        int spreadSheets = slot <= 0 ? 0 : Mathf.Clamp(slot, 1, RiffleMaxSheets);
+        int mainStep = Mathf.Clamp((book.currentPage - 1) / 2, 0, PageCount() - 1);
+        int mainSheets = Mathf.Min(mainStep, 7);
+        int startSlot = slot;
+        riffleStash.Clear();
+
+        // the pages that fly past are the finished ones: the old placeholder pages are skipped
+        var candidates = new List<int>();
+        for (int i = startSlot - 1; i >= 0; i--)
+        {
+            string name = sceneLeft[i] != null ? sceneLeft[i].name : "";
+            if (name != "Page 6" && name != "Page 7")
+                candidates.Add(i);
+        }
+
+        if (candidates.Count == 0 || candidates[candidates.Count - 1] != 0)
+            candidates.Add(0);
+        if (spreadSheets > candidates.Count)
+            spreadSheets = candidates.Count;
+
+        AlignCurl();
+        SetScreenUiActive(false);
+
+        if (spreadSheets > 0)
+        {
+            ActivateOnly(sceneLeft, -1);
+            ActivateOnly(sceneRight, -1);
+            SetControlBooksActive(true);
+            // what is on the spread right now is the first sheet to lift
+            Stash(slot, leftBaked[Mathf.Clamp(leftIndex, 0, leftBaked.Length - 1)], rightBaked[Mathf.Clamp(rightIndex, 0, rightBaked.Length - 1)]);
+            spreadBook.SnapToPage(slot * 2 + 1);
+        }
+
+        if (mainSheets > 0)
+        {
+            ActivateOnly(sceneBook, -1);
+            SetMainBookActive(true);
+            book.SnapToPage(mainStep * 2 + 1);
+        }
+        else
+        {
+            ActivateOnly(sceneBook, shownStep);
+        }
+
+        int spreadDone = 0, mainDone = 0;
+        while (spreadDone < spreadSheets || mainDone < mainSheets || IsAnyFlipping())
+        {
+            if (spreadDone < spreadSheets && !spreadSwipe.IsFlipping)
+            {
+                // the next spot the book lands on is dressed with a page nearer the front
+                int pick = Mathf.Clamp(Mathf.CeilToInt((spreadDone + 1) * (float)candidates.Count / spreadSheets) - 1, 0, candidates.Count - 1);
+                int landing = candidates[pick];
+                int target = slot - 1;
+                Stash(target, leftBaked[Mathf.Clamp(landing, 0, leftBaked.Length - 1)], rightBaked[Mathf.Clamp(landing, 0, rightBaked.Length - 1)]);
+                spreadBook.SnapToPage(slot * 2 + 1);
+                spreadSwipe.BeginFlip(false);
+                slot--;
+                spreadDone++;
+            }
+
+            if (mainDone < mainSheets && !swipe.IsFlipping)
+            {
+                book.SnapToPage(mainStep * 2 + 1);
+                swipe.BeginFlip(false);
+                mainStep--;
+                mainDone++;
+            }
+
+            yield return null;
+        }
+
+        // put everything back and show the first pages for real
+        for (int i = riffleStash.Count - 1; i >= 0; i--)
+        {
+            RiffleStash item = riffleStash[i];
+            spreadBook.bookPages[item.slot * 2] = item.left;
+            spreadBook.bookPages[item.slot * 2 + 1] = item.right;
+        }
+
+        riffleStash.Clear();
+        spreadSwipe.flipDuration = oldSpreadSeconds;
+        swipe.flipDuration = oldMainSeconds;
+        swipe.alsoFlip = oldLinked;
+        riffling = false;
+        SetControlBooksActive(false);
+        SetMainBookActive(false);
+        ShowStep(0, "", false);
+    }
+
+    /// <summary>Remembers what a book spot held, so it can be put back after the riffle, then dresses it later.</summary>
+    void Stash(int slot, Sprite left, Sprite right)
+    {
+        // a spot that already was stashed keeps its first (true) content
+        bool known = false;
+        for (int i = 0; i < riffleStash.Count; i++)
+        {
+            if (riffleStash[i].slot == slot)
+                known = true;
+        }
+
+        if (!known)
+            riffleStash.Add(new RiffleStash { slot = slot, left = spreadBook.bookPages[slot * 2], right = spreadBook.bookPages[slot * 2 + 1] });
+        spreadBook.bookPages[slot * 2] = left;
+        spreadBook.bookPages[slot * 2 + 1] = right;
     }
 
     /// <summary>The main canvas shows the closing screen ("That's all for now") while the spread turns to its closing pages.</summary>
