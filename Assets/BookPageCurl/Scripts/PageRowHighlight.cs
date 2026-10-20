@@ -13,13 +13,13 @@ public class PageRowHighlight : MonoBehaviour
     public MotionGlow glow;
     public AxisReveal vertical;
     [Tooltip("Seconds the gradient takes to reveal from the top down.")]
-    public float wipeDuration = 2.4f;
+    public float wipeDuration = 1.2f;
     [Tooltip("The second highlight (the thin line) is drawn from the top down by this component, not by its own animation.")]
-    public float verticalDuration = 2.4f;
+    public float verticalDuration = 1.5f;
     [Tooltip("Seconds after the click before the second highlight starts.")]
-    public float verticalDelay = 0.4f;
+    public float verticalDelay = 0.25f;
     [Tooltip("Seconds the highlights take to fade in while they are revealed.")]
-    public float fadeDuration = 2.0f;
+    public float fadeDuration = 1.3f;
 
     static PageRowHighlight active;
 
