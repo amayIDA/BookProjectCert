@@ -36,9 +36,9 @@ namespace ScreenKit
             new[] { "BUSINESS ENGLISH\nLADDER", "", "Progress from workplace vocabulary to presentations, negotiation,\nand a completed project, with measurable gains." },
             new[] { "ADVANCED PRESENTATION\nSKILLS", "", "Confidence in high-stakes settings and presentation-ready\noutcomes in the UAE context." },
             new[] { "EXECUTIVE PRESENTATIONS\n& BRIEFINGS", "", "Covering influence, clarity, and presence.\nA leadership presence toolkit and readiness for executive visibility." },
-            new[] { "BOARDROOM ENGLISH", "BOARDS, INVESTORS, REGULATORS", "Authoritative presentation skills for the audiences that matter most." },
-            new[] { "MEASURABLE OUTCOMES", "LANGUAGE ROI REPORTING", "Baselines, progress tracking and proficiency gains reported as clear ROI." },
-            new[] { "SPONSORED PROGRAMMES", "LICENSING AND STUDY ABROAD", "Structured pathways for staff licensing, overseas study and internal promotion." }
+            new[] { "BESPOKE EXECUTIVE\nPROGRAMME", "", "Adapted from Executive Presentations & Briefings and Advanced Presentation\nSkills, with your own case studies and a small-cohort or one-to-one format.\nClear, authoritative communication at the top." },
+            new[] { "FULL FIVE-STEP\nMETHODOLOGY", "", "Discover, Design, Deliver, Evaluate, Sustain with CEFR diagnostics for every group\nand a bespoke blueprint mapped to job roles.\nProficiency gains, workplace indicators, and ROI reported back to leadership." },
+            new[] { "IELTS, TOEFL & TOEIC\nPREPARATION <size=45%>(Globally Acknowledged Certifications)</size>", "", "At beginner, low intermediate, or intermediate level.\nAn objective readiness measure through the Exit Test, with a personal plan\ntoward the target band." }
         };
 
         [MenuItem("Book/Screens/Build Question Pages")]
@@ -115,7 +115,7 @@ namespace ScreenKit
             programme.characterSpacing = 8f; programme.lineSpacing = -6f;
             int longest = 0;
             foreach (string line in (words[0] + "\n" + words[1]).Split('\n'))
-                longest = Mathf.Max(longest, line.Replace("|", "").Length);
+                longest = Mathf.Max(longest, System.Text.RegularExpressions.Regex.Replace(line.Replace("|", ""), "<size=.*?</size>|<.*?>", "").Length);
             if (longest > 22)
             {
                 // a long line keeps to one line, as in the design
@@ -124,7 +124,11 @@ namespace ScreenKit
             Fx.Words(programme.gameObject, MotionDirection.Bottom, 40f, Beat.Content, 0.09f, 0.6f, true);
             s.Icon(card, "Scenario icon", ScenarioIcons[scenario], 0.962f, 0.86f, 64f, st.white, Beat.Content + 0.2f);
             Lane lane = new Lane(Beat.Content + 0.7f);
-            s.Read(card, lane, "Description", words[2], st.light, 40, st.white, 0.035f, 0.08f, 0.95f, 0.46f, TextAlignmentOptions.MidlineLeft, 0.05f);
+            int widest = 0;
+            foreach (string line in words[2].Split('\n'))
+                widest = Mathf.Max(widest, line.Length);
+            float descriptionSize = widest > 70 ? 32f : 40f;
+            s.Read(card, lane, "Description", words[2], st.light, descriptionSize, st.white, 0.035f, 0.08f, 0.95f, 0.46f, TextAlignmentOptions.MidlineLeft, 0.05f);
 
             s.Finish();
             EditorUtility.SetDirty(page.gameObject);
