@@ -57,6 +57,40 @@ namespace ScreenKit
             EditorSceneManager.SaveScene(leftLists.gameObject.scene);
         }
 
+        /// <summary>
+        /// Page 9 on the left canvas is the hand-tuned design. This rebuilds Pages 10 to 13 as exact copies of it
+        /// (positions, sizes, fonts, highlights, animation) and only swaps the title and the three questions.
+        /// Run this instead of Build when Page 9 has been edited by hand.
+        /// </summary>
+        [MenuItem("Book/Screens/Copy Left Page 9 Layout To Pages 10-13")]
+        public static void CopyLayout()
+        {
+            Transform source = Find("LeftCanvas", "Page 9");
+            if (source == null)
+            {
+                Debug.LogError("Left Page 9 was not found.");
+                return;
+            }
+
+            for (int i = 1; i < Names.Length; i++)
+            {
+                Transform page = Fresh("LeftCanvas", "Page " + (9 + i), "Page 9");
+                TMP_Text title = page.Find("Text").GetComponent<TMP_Text>();
+                title.text = Titles[i];
+                for (int r = 0; r < 3; r++)
+                {
+                    Transform row = page.Find("Question " + (r + 1));
+                    row.Find("Text").GetComponent<TMP_Text>().text = Questions[i][r];
+                }
+
+                EditorUtility.SetDirty(page.gameObject);
+            }
+
+            Debug.Log("Left Pages 10 to 13 now copy Page 9.");
+            EditorSceneManager.MarkSceneDirty(source.gameObject.scene);
+            EditorSceneManager.SaveScene(source.gameObject.scene);
+        }
+
         static Transform Find(string canvas, string page)
         {
             GameObject go = GameObject.Find(canvas);
