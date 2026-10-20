@@ -22,10 +22,9 @@ namespace ScreenKit
         {
             GameObject canvas = GameObject.Find("RightCanvas");
             Transform page = canvas != null ? canvas.transform.Find("PagePanels/Page 3") : null;
-            VideoClip clip = AssetDatabase.LoadAssetAtPath<VideoClip>(VideoPath);
-            if (page == null || clip == null)
+            if (page == null)
             {
-                Debug.LogError("Right Page 3 or " + VideoPath + " was not found.");
+                Debug.LogError("Right Page 3 was not found.");
                 return;
             }
 
@@ -34,17 +33,7 @@ namespace ScreenKit
 
             Style st = new Style();
 
-            // the book animation, centred in the upper middle of the page
-            RectTransform videoRect = Screen.Stretch("BookVideo", page);
-            videoRect.anchorMin = videoRect.anchorMax = new Vector2(0.5f, 0.57f);
-            videoRect.sizeDelta = new Vector2(560f, 560f);
-            videoRect.anchoredPosition = Vector2.zero;
-            RawImage raw = videoRect.gameObject.AddComponent<RawImage>();
-            raw.color = new Color(1f, 1f, 1f, 0f);
-            raw.raycastTarget = false;
-            PageVideo video = videoRect.gameObject.AddComponent<PageVideo>();
-            video.clip = clip;
-            video.startDelay = 0.3f;
+            // the picture above the words is the animated Turn the page icon, added by Book/Icons/Apply Animated Icons
 
             // the words under it are the button that turns the page
             RectTransform textRect = Screen.Stretch("Turn the page", page);
@@ -73,7 +62,7 @@ namespace ScreenKit
             seq.Collect(true);
             EditorUtility.SetDirty(seq);
 
-            Debug.Log("Right page 3 built: video " + clip.width + "x" + clip.height + ", " + clip.length.ToString("0.0") + "s, " + seq.entries.Count + " animated item.");
+            Debug.Log("Right page 3 built: " + seq.entries.Count + " animated item.");
             EditorSceneManager.MarkSceneDirty(page.gameObject.scene);
             EditorSceneManager.SaveScene(page.gameObject.scene);
         }

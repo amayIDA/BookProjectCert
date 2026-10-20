@@ -149,7 +149,7 @@ public static class AnimatedIconTools
         for (int i = 0; i < 5; i++)
             count += Large("RightCanvas", "Page " + (9 + i), "BigIcon", ScenarioVideos[i]);
         count += AddLarge("RightCanvas", "Page 7", "Thats_all", new Vector2(0.5f, 0.66f), 280f, 0.2f);
-        count += AddLarge("RightCanvas", "Page 3", "Turn_the_page", new Vector2(0.5f, 0.2f), 230f, 1.2f);
+        count += AddLarge("RightCanvas", "Page 3", "Turn_the_page", new Vector2(0.5f, 0.57f), 480f, 0.3f);
 
         // ---- small icons: play once when they appear ----
         string[] leftRows = { "Entry Level", "Frontline", "Functional" };
