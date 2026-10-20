@@ -30,9 +30,9 @@ namespace ScreenKit
             new[] { "ENGLISH FOR", "CUSTOMER CARE", "Better satisfaction and retention, with a consistent service voice." },
             new[] { "ENGLISH FOR", "SALES & MARKETING", "Stronger sales performance and confident customer conversations." },
             new[] { "", "BESPOKE", "One framework, sector-specific delivery, and KPIs defined with the client." },
-            new[] { "HR ENGLISH", "DOCUMENTATION AND INTERVIEWS", "Precise written records, structured interviews and sensitive employee conversations." },
-            new[] { "OFFICE ENGLISH", "MEETINGS AND COORDINATION", "Run meetings, work with systems and coordinate in writing without friction." },
-            new[] { "INTERVIEW READINESS", "CANDIDATES AND PROMOTION", "Targeted practice that turns interview-stage nerves into a confident performance." },
+            new[] { "ENGLISH |", "FOR HR", "Covering recruitment, Selection, Employee Relations, and HR Development.\nAccurate HR documentation and confident interviews and\ndisciplinary conversations." },
+            new[] { "ENGLISH FOR", "ADMINISTRATIVE SUPPORT (A2 TO B1)", "Immediately applicable office English and readiness to collaborate in meetings." },
+            new[] { "BUSINESS |", "ENGLISH 4", "Covers interview and Cross-cultural readiness.\nStronger interview performance and a more credible internal talent pipeline." },
             new[] { "LEADERSHIP ENGLISH", "PROMOTION PATHWAY", "Technical strength matched with the language to lead, so skill is never held back." },
             new[] { "PRESENTING AND NEGOTIATING", "MANAGERS", "Structure, persuade and negotiate clearly in front of clients and stakeholders." },
             new[] { "EXECUTIVE BRIEFING", "EMERGING LEADERS", "Concise, confident briefings that earn the attention of senior executives." },
@@ -107,8 +107,13 @@ namespace ScreenKit
             s.Glow(card, 0.6f, 0.55f, 0.51f, 1f, Beat.Glow);
 
             string[] words = Content[index];
-            TMP_Text programme = s.Text(card, "Programme", (words[0].Length > 0 ? words[0] + "\n" : "") + "<color=#8C9BFF>" + words[1] + "</color>", st.regular, 66, st.white, 0.035f, 0.56f, 0.88f, 0.95f, TextAlignmentOptions.MidlineLeft);
+            TMP_Text programme = s.Text(card, "Programme", (words[0].Length == 0 ? "" : words[0].EndsWith("|") ? words[0].TrimEnd('|') : words[0] + "\n") + "<color=#8C9BFF>" + words[1] + "</color>", st.regular, 66, st.white, 0.035f, 0.56f, 0.88f, 0.95f, TextAlignmentOptions.MidlineLeft);
             programme.characterSpacing = 8f; programme.lineSpacing = -6f;
+            if (words[1].Length > 26)
+            {
+                // a long line keeps to one line, as in the design
+                programme.fontSize = 52; programme.characterSpacing = 5f;
+            }
             Fx.Words(programme.gameObject, MotionDirection.Bottom, 40f, Beat.Content, 0.09f, 0.6f, true);
             s.Icon(card, "Scenario icon", ScenarioIcons[scenario], 0.962f, 0.86f, 64f, st.white, Beat.Content + 0.2f);
             Lane lane = new Lane(Beat.Content + 0.7f);
