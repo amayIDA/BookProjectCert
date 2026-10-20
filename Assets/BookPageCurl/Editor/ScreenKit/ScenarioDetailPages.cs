@@ -130,6 +130,9 @@ namespace ScreenKit
                 seq.Add(text.GetComponent<MotionItem>(), 0f);
             }
 
+            // all three questions come in together: every item shares one order
+            foreach (MotionBehaviour b in page.GetComponentsInChildren<MotionBehaviour>(true))
+                b.order = 0;
             EditorUtility.SetDirty(seq);
         }
 
