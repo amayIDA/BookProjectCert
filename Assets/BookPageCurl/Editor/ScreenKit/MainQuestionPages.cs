@@ -25,8 +25,8 @@ namespace ScreenKit
         static readonly string[][] Content =
         {
             new[] { "GENERAL ENGLISH", "PRE-BEGINNER/BEGINNER", "Literacy and workplace readiness from day one, with a clear pathway upward." },
-            new[] { "PROFESSIONAL ENGLISH", "ELEMENTARY TO INTERMEDIATE", "Everyday workplace communication that builds confidence in meetings, calls and teamwork." },
-            new[] { "BUSINESS WRITING", "EMAIL ESSENTIALS", "Clear, professional emails and messages, from the first draft to the final send." },
+            new[] { "GENERAL ENGLISH", "L2/ SPEAKING A1", "Staff join conversations instead of just following them, which means fewer errors and fewer escalations to supervisors." },
+            new[] { "WORKPLACE", "WRITING A2", "Clear, professional workplace documents from the first draft." },
             new[] { "SERVICE COMMUNICATION", "PHONE AND FRONT DESK", "Consistent, courteous phone manner and customer handling that people notice." },
             new[] { "SALES ENGLISH", "PRODUCTS AND CLOSING", "Explain products with confidence, handle objections and close the sale in English." },
             new[] { "SERVICE LANGUAGE STANDARD", "SITES AND SECTORS", "One shared language framework, so every team serves customers the same way." },
@@ -49,6 +49,12 @@ namespace ScreenKit
                 Build(i, scrim);
             ScenarioQuestionButtons.Apply();
             Debug.Log("Built " + Content.Length + " question pages on the main canvas.");
+        }
+
+        /// <summary>Rebuilds just one question page (0 to 14), leaving the others as they are.</summary>
+        public static void Rebuild(int index)
+        {
+            Build(index, Scrim());
         }
 
         static void Build(int index, Sprite scrim)

@@ -1725,8 +1725,19 @@ public class BookScreens : MonoBehaviour
     /// <summary>The main canvas shows the question that was clicked on the left canvas.</summary>
     void ShowQuestion(int index)
     {
-        int page = flowPages + index;
-        if (page < 0 || page >= sceneBook.Length)
+        // found by name, so rebuilding a page (which moves it in the list) never mixes them up
+        string pageName = "Question " + (index / 3 + 1) + "-" + (index % 3 + 1);
+        int page = -1;
+        for (int i = flowPages; i < sceneBook.Length; i++)
+        {
+            if (sceneBook[i].name == pageName)
+            {
+                page = i;
+                break;
+            }
+        }
+
+        if (page < 0)
             return;
         questionOpen = true;
         ActivateOnly(sceneBook, page);
