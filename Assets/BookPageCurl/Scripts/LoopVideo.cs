@@ -40,6 +40,8 @@ public class LoopVideo : MonoBehaviour
             player.playOnAwake = false;
             player.isLooping = true;
             player.skipOnDrop = true;
+            player.waitForFirstFrame = true;
+            player.playbackSpeed = 1f;
             player.audioOutputMode = VideoAudioOutputMode.None;
             player.renderMode = VideoRenderMode.RenderTexture;
             player.targetTexture = texture;
@@ -75,6 +77,26 @@ public class LoopVideo : MonoBehaviour
         {
             if (targets[i].image != null)
                 targets[i].image.color = Color.white;
+        }
+    }
+
+    Vector2 lastSize;
+
+    void LateUpdate()
+    {
+        if (!cover || targets == null)
+            return;
+        for (int i = 0; i < targets.Length; i++)
+        {
+            RawImage image = targets[i].image;
+            if (image == null)
+                continue;
+            Vector2 size = ((RectTransform)image.transform).rect.size;
+            if (size != lastSize)
+            {
+                lastSize = size;
+                image.uvRect = CoverRect(image);
+            }
         }
     }
 
