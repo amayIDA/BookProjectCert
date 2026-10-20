@@ -299,7 +299,7 @@ public class BookScreens : MonoBehaviour
     {
         Canvas spread = SpreadScreen();
         Canvas single = MainScreen();
-        Fit(spread, new Vector2(2048f, 1820f), true);
+        Fit(spread, ReferenceSize(spread), true);
         Fit(single, new Vector2(1080f, 1920f), true);
         FitBookSpreads(single);
         HideOldBook(LeftHalf());

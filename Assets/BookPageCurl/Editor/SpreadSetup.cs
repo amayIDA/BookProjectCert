@@ -8,11 +8,76 @@ using UnityEngine.UI;
 /// display 1 is one SpreadCanvas that holds the left and right pages together, display 2 is the MainCanvas.
 /// Nothing on the pages moves: LeftCanvas and RightCanvas keep their names and their PagePanels, they just become
 /// the two halves of the spread instead of separate canvases.
+/// The background is TwoPagesTrim.png: TwoPages.png with its white margin cut off, so the spread fills the whole screen.
 /// </summary>
 public static class SpreadSetup
 {
-    const string TwoPagesPath = "Assets/UI/TwoPages.png";
-    static readonly Vector2 SpreadSize = new Vector2(2048f, 1820f);
+    const string TwoPagesPath = "Assets/UI/TwoPagesTrim.png";
+    static readonly Vector2 SpreadSize = new Vector2(2080f, 1704f);
+
+    /// <summary>
+    /// Makes the spread fill the whole screen: the trimmed background replaces the old one and the two pages stretch
+    /// over the full canvas, so there is no white around it on any screen shape.
+    /// </summary>
+    [MenuItem("Book/Setup/Fit Spread To Screen")]
+    public static void FitToScreen()
+    {
+        GameObject root = GameObject.Find("SpreadCanvas");
+        if (root == null)
+        {
+            Debug.LogError("Run Book/Setup/Merge Left And Right Into One Spread first.");
+            return;
+        }
+
+        Sprite leftSprite;
+        Sprite rightSprite;
+        if (!SliceTwoPages(out leftSprite, out rightSprite))
+            return;
+
+        CanvasScaler scaler = root.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = SpreadSize;
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
+
+        RectTransform area = (RectTransform)root.transform.Find("Spread");
+        area.anchorMin = Vector2.zero;
+        area.anchorMax = Vector2.one;
+        area.pivot = new Vector2(0.5f, 0.5f);
+        area.offsetMin = Vector2.zero;
+        area.offsetMax = Vector2.zero;
+
+        SetPanel(GameObject.Find("LeftCanvas"), leftSprite);
+        SetPanel(GameObject.Find("RightCanvas"), rightSprite);
+
+        EditorSceneManager.MarkSceneDirty(root.scene);
+        EditorSceneManager.SaveScene(root.scene);
+        Debug.Log("The spread now fills the screen.");
+    }
+
+    /// <summary>A canvas object sits at some depth from its camera. A half must sit on the spread plane, or it is drawn smaller.</summary>
+    static void FlattenDepth(GameObject half)
+    {
+        if (half == null)
+            return;
+        Transform t = half.transform;
+        Vector3 position = t.localPosition;
+        position.z = 0f;
+        t.localPosition = position;
+        t.localRotation = Quaternion.identity;
+        t.localScale = Vector3.one;
+    }
+
+    static void SetPanel(GameObject half, Sprite sprite)
+    {
+        FlattenDepth(half);
+        Transform panel = half != null ? half.transform.Find("Panel") : null;
+        Image image = panel != null ? panel.GetComponent<Image>() : null;
+        if (image == null)
+            return;
+        image.sprite = sprite;
+        image.type = Image.Type.Simple;
+        image.preserveAspect = false;
+    }
 
     [MenuItem("Book/Setup/Merge Left And Right Into One Spread")]
     public static void Merge()
@@ -109,6 +174,7 @@ public static class SpreadSetup
         rect.offsetMax = Vector2.zero;
         rect.localScale = Vector3.one;
         rect.localRotation = Quaternion.identity;
+        FlattenDepth(go);
 
         Transform panel = go.transform.Find("Panel");
         if (panel != null)
@@ -162,8 +228,8 @@ public static class SpreadSetup
         importer.spritePixelsPerUnit = 100f;
         importer.spritesheet = new[]
         {
-            new SpriteMetaData { name = "TwoPages_Left", rect = new Rect(0f, 0f, width * 0.5f, height), alignment = (int)SpriteAlignment.Center, pivot = new Vector2(0.5f, 0.5f) },
-            new SpriteMetaData { name = "TwoPages_Right", rect = new Rect(width * 0.5f, 0f, width * 0.5f, height), alignment = (int)SpriteAlignment.Center, pivot = new Vector2(0.5f, 0.5f) }
+            new SpriteMetaData { name = "TwoPagesTrim_Left", rect = new Rect(0f, 0f, width * 0.5f, height), alignment = (int)SpriteAlignment.Center, pivot = new Vector2(0.5f, 0.5f) },
+            new SpriteMetaData { name = "TwoPagesTrim_Right", rect = new Rect(width * 0.5f, 0f, width * 0.5f, height), alignment = (int)SpriteAlignment.Center, pivot = new Vector2(0.5f, 0.5f) }
         };
         importer.SaveAndReimport();
 
@@ -172,9 +238,9 @@ public static class SpreadSetup
             Sprite sprite = asset as Sprite;
             if (sprite == null)
                 continue;
-            if (sprite.name == "TwoPages_Left")
+            if (sprite.name == "TwoPagesTrim_Left")
                 left = sprite;
-            else if (sprite.name == "TwoPages_Right")
+            else if (sprite.name == "TwoPagesTrim_Right")
                 right = sprite;
         }
 
