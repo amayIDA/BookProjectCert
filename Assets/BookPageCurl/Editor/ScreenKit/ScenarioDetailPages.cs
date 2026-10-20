@@ -122,14 +122,12 @@ namespace ScreenKit
                 Transform line = row.Find("Line");
                 Transform glow = row.Find("ImagetoHighlight");
                 Transform edge = row.Find("ImagetoHighlight2");
-                glow.gameObject.SetActive(true);
-                edge.gameObject.SetActive(true);
-                float at = 0.35f + r * 0.35f;
+                // the rows start un-clicked, as on the lists: no highlight
+                glow.gameObject.SetActive(false);
+                edge.gameObject.SetActive(false);
                 seq.Add(row.Find("Number").GetComponent<MotionItem>(), 0f);
                 seq.Add(line.GetComponent<AxisReveal>(), 0f);
                 seq.Add(text.GetComponent<MotionItem>(), 0f);
-                seq.Add(glow.GetComponent<MotionGlow>(), at);
-                seq.Add(edge.GetComponent<AxisReveal>(), at);
             }
 
             EditorUtility.SetDirty(seq);
