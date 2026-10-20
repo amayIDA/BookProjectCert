@@ -16,7 +16,7 @@ namespace ScreenKit
         [MenuItem("Book/Screens/Build Right Page 7")]
         public static void Build()
         {
-            Transform page = ScreenPages.Ensure("RightCanvas", "Page 7", "Page 3");
+            Transform page = ScreenPages.Ensure("RightCanvas", "Page 7", "Page 2");
             Transform pageOne = GameObject.Find("RightCanvas").transform.Find("PagePanels/Page 1");
             if (page == null || pageOne == null)
                 return;

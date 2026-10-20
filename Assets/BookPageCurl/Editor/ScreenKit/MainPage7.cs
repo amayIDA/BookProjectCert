@@ -19,8 +19,8 @@ namespace ScreenKit
         public static void Build()
         {
             Transform page = ScreenPages.Ensure("MainCanvas", "Page " + PageNumber, "Page 4");
-            ScreenPages.Ensure("LeftCanvas", "Page " + PageNumber, "Page 3");
-            ScreenPages.Ensure("RightCanvas", "Page " + PageNumber, "Page 3");
+
+
             if (page == null)
                 return;
 

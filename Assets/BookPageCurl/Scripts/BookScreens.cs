@@ -112,7 +112,7 @@ public class BookScreens : MonoBehaviour
     [Tooltip("The first main page At A Glance shows. It then turns once more to the page after it.")]
     public int atAGlanceFirstPage = 2;
     [Tooltip("Page shown on the right canvas when Begin Here is pressed (the book video page). The first page is 0.")]
-    public int beginHereRightPage = 2;
+    public int beginHereRightPage = 1;
     [Tooltip("Main page shown when the page is turned after Begin Here. The first page is 0.")]
     public int beginHereMainPage = 4;
     const int ButtonsPage = 1;
@@ -135,8 +135,9 @@ public class BookScreens : MonoBehaviour
     bool scenariosShown;
     bool scenarioPending;
     [Tooltip("Index of the left and right pages (the Begin Here scenario lists) shown when the page is turned after Begin Here. The first page is 0.")]
-    public int scenarioPage = 7;
-    const int FirstDetailPage = 8;
+    public int scenarioPage = 4;
+    // the five scenario detail pages follow the scenario lists
+    int FirstDetailPage { get { return scenarioPage + 1; } }
     static readonly string[] ScenarioNames = { "Entry Level", "Frontline", "Functional", "Managers", "Executives" };
     int lastTargetPage = -1;
     Coroutine mainTwice;
@@ -1242,7 +1243,7 @@ public class BookScreens : MonoBehaviour
         }
 
         int step = (book.currentPage - 1) / 2 + (next ? 1 : -1);
-        if (step < 0 || step >= PageCount())
+        if (step < 0 || step >= PageCount() || step > ButtonsPage)
             return;
         ShowStep(step, Selection(step), true);
     }
@@ -1605,7 +1606,8 @@ public class BookScreens : MonoBehaviour
 
             sidesStay = false;
             int next = book == null ? 0 : (book.currentPage - 1) / 2 + 1;
-            if (next >= PageCount())
+            // the spread only has the cover and the buttons page; the pages after them are opened by their buttons
+            if (next >= PageCount() || next > ButtonsPage)
                 return;
             ShowStep(next, Selection(next), true);
             return;
@@ -1645,7 +1647,7 @@ public class BookScreens : MonoBehaviour
             // the main page turns to its page, the spread keeps the buttons page; Get In Touch also shows the thank you page on the right
             bool touch = string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase);
             sidesStay = true;
-            SetSides(ButtonsPage, touch ? step : ButtonsPage);
+            SetSides(ButtonsPage, touch ? RightIndexForStep(step) : ButtonsPage);
             TurnMainOnly(step);
             return;
         }
@@ -1723,6 +1725,19 @@ public class BookScreens : MonoBehaviour
     }
 
     /// <summary>The main canvas shows the question that was clicked on the left canvas.</summary>
+    /// <summary>The right canvas page that belongs to a main step (Page 7 for step 6), found by name since pages 3 to 5 no longer exist there.</summary>
+    int RightIndexForStep(int step)
+    {
+        string wanted = "Page " + (step + 1);
+        for (int i = 0; i < sceneRight.Length; i++)
+        {
+            if (sceneRight[i] != null && sceneRight[i].name == wanted)
+                return i;
+        }
+
+        return ButtonsPage;
+    }
+
     void ShowQuestion(int index)
     {
         // found by name, so rebuilding a page (which moves it in the list) never mixes them up
