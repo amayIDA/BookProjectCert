@@ -259,6 +259,12 @@ namespace ScreenKit
             Prefab(LogoPrefab, "Page 3/Sheet/Logo", "Logo");
         }
 
+        /// <summary>The shared logo, top right.</summary>
+        public void Logo()
+        {
+            Prefab(LogoPrefab, "Page 3/Sheet/Logo", "Logo");
+        }
+
         // ---------- card ----------
 
         /// <summary>

@@ -129,6 +129,8 @@ public class BookScreens : MonoBehaviour
     Sprite stashedRight;
     int stashedSpread = -1;
     Sprite[] stationaryMain;
+    int flowPages;
+    bool questionOpen;
     bool beginHereMode;
     bool scenariosShown;
     bool scenarioPending;
@@ -466,9 +468,9 @@ public class BookScreens : MonoBehaviour
 
     int PageCount()
     {
-        // the main pages; the spread has more pages (the scenario details) than the main canvas
+        // the main pages in the book; the question pages that follow them are opened by their own buttons
         if (sceneBook.Length > 0)
-            return sceneBook.Length;
+            return flowPages;
         if (sceneLeft.Length > 0)
             return sceneLeft.Length;
         return steps.Count;
@@ -491,6 +493,15 @@ public class BookScreens : MonoBehaviour
         sceneLeft = PageList(LeftHalf());
         sceneRight = PageList(RightHalf());
         sceneBook = PageList(MainScreen());
+        flowPages = sceneBook.Length;
+        for (int i = 0; i < sceneBook.Length; i++)
+        {
+            if (sceneBook[i].name.StartsWith("Question"))
+            {
+                flowPages = i;
+                break;
+            }
+        }
     }
 
     static RectTransform[] PageList(Component canvas)
@@ -898,7 +909,7 @@ public class BookScreens : MonoBehaviour
         bool live = HasBackVideo(screen);
         Sprite empty = live ? Sprite.Create(new Texture2D(2, 2, TextureFormat.RGBA32, false), new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0.5f), 100f) : null;
         var still = new List<Sprite>();
-        for (int i = 0; i < sceneBook.Length; i++)
+        for (int i = 0; i < flowPages; i++)
         {
             pages.Add(panel);
             pages.Add(BakePanel(sceneBook[i], width, height, screen, 4000f + i * 40f));
@@ -1567,6 +1578,7 @@ public class BookScreens : MonoBehaviour
             scenariosShown = false;
             contextRow = "";
             sidesStay = false;
+            questionOpen = false;
             ShowStep(0, "", false);
             return;
         }
@@ -1596,6 +1608,13 @@ public class BookScreens : MonoBehaviour
             if (next >= PageCount())
                 return;
             ShowStep(next, Selection(next), true);
+            return;
+        }
+
+        // a question on a scenario page opens its screen on the main canvas
+        if (action == ButtonAction.OpenPage && contextRow == "Begin Here" && leftIndex >= FirstDetailPage && id.StartsWith("Question"))
+        {
+            ShowQuestion(step);
             return;
         }
 
@@ -1649,6 +1668,7 @@ public class BookScreens : MonoBehaviour
     /// </summary>
     void TurnSidesTo(int to)
     {
+        CloseQuestion();
         if (spreadSwipe == null || spreadBook == null || leftBaked == null || to < 1 || to >= sceneLeft.Length || to >= sceneRight.Length)
             return;
         sidesStay = true;
@@ -1674,6 +1694,7 @@ public class BookScreens : MonoBehaviour
     /// <summary>Turns the spread back one page: the left page lifts across the spine and the earlier pages are uncovered.</summary>
     void TurnSidesBack(int toLeft, int toRight)
     {
+        CloseQuestion();
         if (spreadSwipe == null || spreadBook == null || leftBaked == null || leftIndex < 1 || toLeft < 0 || toLeft >= leftBaked.Length || toRight >= rightBaked.Length)
             return;
         sidesStay = true;
@@ -1699,6 +1720,28 @@ public class BookScreens : MonoBehaviour
         SetControlBooksActive(true);
         spreadBook.SnapToPage(spread * 2 + 1);
         spreadSwipe.BeginFlip(false);
+    }
+
+    /// <summary>The main canvas shows the question that was clicked on the left canvas.</summary>
+    void ShowQuestion(int index)
+    {
+        int page = flowPages + index;
+        if (page < 0 || page >= sceneBook.Length)
+            return;
+        questionOpen = true;
+        ActivateOnly(sceneBook, page);
+        RaisePagePanels();
+        StartCoroutine(FadePageIn(sceneBook[page]));
+    }
+
+    /// <summary>Back to the page the main canvas showed before a question was opened.</summary>
+    void CloseQuestion()
+    {
+        if (!questionOpen)
+            return;
+        questionOpen = false;
+        ActivateOnly(sceneBook, shownStep);
+        RaisePagePanels();
     }
 
     void RestoreFaces()
