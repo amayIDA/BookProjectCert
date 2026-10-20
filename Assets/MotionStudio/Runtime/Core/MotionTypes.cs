@@ -80,6 +80,8 @@ namespace MotionStudio
         public float scale;
         public bool useColor;
         public Color color;
+        /// <summary>0 = sharp, 1 = fully soft edges (TextMeshPro only).</summary>
+        public float blur;
     }
 
     /// <summary>Anything that can be placed on the timeline of a MotionSequence.</summary>

@@ -46,7 +46,6 @@ public class TalentWheelFlow : MonoBehaviour
     string view = "idle";
     string code;
     string handoffStatus;
-    bool consult;
     bool handed;
     float lastActivity;
     bool ready;
@@ -100,7 +99,7 @@ public class TalentWheelFlow : MonoBehaviour
 
     static Canvas FindCanvas(string canvasName)
     {
-        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < canvases.Length; i++)
         {
             if (canvases[i].name == canvasName)
@@ -644,7 +643,6 @@ public class TalentWheelFlow : MonoBehaviour
 
     void ConsultView()
     {
-        consult = true;
         EnsureSession();
         content.Field.Formation("brandx", null, 0.55f);
 
@@ -758,7 +756,6 @@ public class TalentWheelFlow : MonoBehaviour
         sectors.Clear();
         explored.Clear();
         code = null;
-        consult = false;
         handed = false;
         handoffStatus = null;
 

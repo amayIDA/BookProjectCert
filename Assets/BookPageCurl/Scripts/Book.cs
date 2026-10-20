@@ -55,7 +55,7 @@ public class Book : MonoBehaviour {
     public Image LeftNext;
     public Image Right;
     public Image RightNext;
-    public UnityEvent OnFlip;
+    public UnityEvent OnFlip = new UnityEvent();
     float radius1, radius2;
     //Spine Bottom
     Vector3 sb;
@@ -80,17 +80,21 @@ public class Book : MonoBehaviour {
 
         Left.gameObject.SetActive(false);
         Right.gameObject.SetActive(false);
+        Reflow();
+    }
+
+    public void Reflow()
+    {
+        if (BookPanel == null || Left == null)
+            return;
         UpdateSprites();
         CalcCurlCriticalPoints();
 
         float pageWidth = BookPanel.rect.width / 2.0f;
         float pageHeight = BookPanel.rect.height;
         NextPageClip.rectTransform.sizeDelta = new Vector2(pageWidth, pageHeight + pageHeight * 2);
-
-
         ClippingPlane.rectTransform.sizeDelta = new Vector2(pageWidth * 2 + pageHeight, pageHeight + pageHeight * 2);
 
-        //hypotenous (diagonal) page length
         float hyp = Mathf.Sqrt(pageWidth * pageWidth + pageHeight * pageHeight);
         float shadowPageHeight = pageWidth / 2 + hyp;
 
@@ -99,7 +103,6 @@ public class Book : MonoBehaviour {
 
         ShadowLTR.rectTransform.sizeDelta = new Vector2(pageWidth, shadowPageHeight);
         ShadowLTR.rectTransform.pivot = new Vector2(0, (pageWidth / 2) / shadowPageHeight);
-
     }
 
     private void CalcCurlCriticalPoints()
@@ -291,6 +294,30 @@ public class Book : MonoBehaviour {
             c = r2;
         return c;
     }
+    public void BindPanel(RectTransform panel)
+    {
+        BookPanel = panel;
+    }
+
+    public void SnapToPage(int page)
+    {
+        if (bookPages == null || bookPages.Length == 0)
+            return;
+        if (currentCoroutine != null)
+        {
+            StopCoroutine(currentCoroutine);
+            currentCoroutine = null;
+        }
+
+        pageDragging = false;
+        currentPage = Mathf.Clamp(page, 0, bookPages.Length - 1);
+        if (Left != null) Left.gameObject.SetActive(false);
+        if (Right != null) Right.gameObject.SetActive(false);
+        if (Shadow != null) Shadow.gameObject.SetActive(false);
+        if (ShadowLTR != null) ShadowLTR.gameObject.SetActive(false);
+        UpdateSprites();
+    }
+
     public void DragRightPageToPoint(Vector3 point)
     {
         if (currentPage >= bookPages.Length) return;

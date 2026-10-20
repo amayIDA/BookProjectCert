@@ -23,6 +23,8 @@ namespace MotionStudio
         readonly List<int[]> units = new List<int[]>();
         Vector3[][] baseVertices;
         Color32[][] baseColors;
+        Vector4[][] baseUvs0;
+        const float SoftestScale = 0.05f;
         TextUnitState[] states = new TextUnitState[0];
 
         public TmpTextAdapter(TMP_Text text)
@@ -57,12 +59,15 @@ namespace MotionStudio
             int meshCount = info.meshInfo.Length;
             baseVertices = new Vector3[meshCount][];
             baseColors = new Color32[meshCount][];
+            baseUvs0 = new Vector4[meshCount][];
             for (int m = 0; m < meshCount; m++)
             {
                 Vector3[] v = info.meshInfo[m].vertices;
                 Color32[] c = info.meshInfo[m].colors32;
                 baseVertices[m] = v != null ? (Vector3[])v.Clone() : new Vector3[0];
                 baseColors[m] = c != null ? (Color32[])c.Clone() : new Color32[0];
+                Vector4[] uv = info.meshInfo[m].uvs0;
+                baseUvs0[m] = uv != null ? (Vector4[])uv.Clone() : new Vector4[0];
             }
 
             states = new TextUnitState[units.Count];
@@ -84,29 +89,67 @@ namespace MotionStudio
             switch (split)
             {
                 case TextSplit.Words:
-                    for (int w = 0; w < info.wordCount; w++)
+                    int wordCount = info.wordInfo != null ? Mathf.Min(info.wordCount, info.wordInfo.Length) : 0;
+                    List<List<int>> words = new List<List<int>>();
+                    bool[] claimed = new bool[Mathf.Max(0, info.characterCount)];
+                    for (int w = 0; w < wordCount; w++)
                     {
                         TMP_WordInfo word = info.wordInfo[w];
                         List<int> chars = new List<int>();
+                        int limit = info.characterInfo != null ? info.characterInfo.Length : 0;
                         for (int c = 0; c < word.characterCount; c++)
-                            chars.Add(word.firstCharacterIndex + c);
-                        units.Add(chars.ToArray());
+                        {
+                            int index = word.firstCharacterIndex + c;
+                            if (index < 0 || index >= limit || index >= claimed.Length)
+                                continue;
+                            chars.Add(index);
+                            claimed[index] = true;
+                        }
+
+                        if (chars.Count > 0)
+                            words.Add(chars);
                     }
+
+                    int characterLimit = info.characterInfo != null ? Mathf.Min(info.characterCount, info.characterInfo.Length) : 0;
+                    for (int c = 0; c < characterLimit; c++)
+                    {
+                        if (c < claimed.Length && claimed[c])
+                            continue;
+                        if (!info.characterInfo[c].isVisible)
+                            continue;
+                        if (words.Count == 0)
+                        {
+                            words.Add(new List<int>());
+                            words[0].Add(c);
+                            continue;
+                        }
+
+                        int owner = 0;
+                        for (int w = 0; w < words.Count; w++)
+                        {
+                            if (words[w][0] <= c)
+                                owner = w;
+                        }
+
+                        words[owner].Add(c);
+                    }
+
+                    for (int w = 0; w < words.Count; w++)
+                        units.Add(words[w].ToArray());
 
                     break;
                 case TextSplit.Lines:
-                    for (int l = 0; l < info.lineCount; l++)
+                    int lineCount = info.lineInfo != null ? Mathf.Min(info.lineCount, info.lineInfo.Length) : 0;
+                    for (int l = 0; l < lineCount; l++)
                     {
                         TMP_LineInfo line = info.lineInfo[l];
-                        List<int> chars = new List<int>();
-                        for (int c = 0; c < line.characterCount; c++)
-                            chars.Add(line.firstCharacterIndex + c);
-                        units.Add(chars.ToArray());
+                        units.Add(Characters(info, line.firstCharacterIndex, line.characterCount));
                     }
 
                     break;
                 default:
-                    for (int c = 0; c < info.characterCount; c++)
+                    int characterCount = info.characterInfo != null ? Mathf.Min(info.characterCount, info.characterInfo.Length) : 0;
+                    for (int c = 0; c < characterCount; c++)
                     {
                         if (info.characterInfo[c].isVisible)
                             units.Add(new[] { c });
@@ -114,6 +157,20 @@ namespace MotionStudio
 
                     break;
             }
+        }
+
+        static int[] Characters(TMP_TextInfo info, int first, int count)
+        {
+            int limit = info.characterInfo != null ? info.characterInfo.Length : 0;
+            List<int> chars = new List<int>();
+            for (int c = 0; c < count; c++)
+            {
+                int index = first + c;
+                if (index >= 0 && index < limit)
+                    chars.Add(index);
+            }
+
+            return chars.ToArray();
         }
 
         public void SetUnit(int index, TextUnitState state)
@@ -162,23 +219,50 @@ namespace MotionStudio
                     Color32[] colors = info.meshInfo[m].colors32;
                     Vector3[] bv = baseVertices[m];
                     Color32[] bc = baseColors[m];
+                    Vector4[] uvs0 = info.meshInfo[m].uvs0;
+                    Vector4[] buv = baseUvs0[m];
+                    bool hidden = s.alpha <= 0.001f;
 
                     for (int j = 0; j < 4; j++)
                     {
+                        if (hidden)
+                        {
+                            destination[vi + j] = new Vector3(0f, -100000f, 0f);
+                            colors[vi + j] = new Color32(0, 0, 0, 0);
+                            continue;
+                        }
+
                         Vector3 p = bv[vi + j];
                         p = centre + (p - centre) * s.scale;
                         p += new Vector3(s.offset.x, s.offset.y, 0f);
                         destination[vi + j] = p;
 
                         Color32 baseColor = bc[vi + j];
-                        Color32 c = s.useColor ? (Color32)s.color : baseColor;
+                        Color32 c = baseColor;
+                        if (s.useColor)
+                        {
+                            Color tint = s.color;
+                            c = new Color32(
+                                (byte)Mathf.Clamp(Mathf.RoundToInt(baseColor.r * tint.r), 0, 255),
+                                (byte)Mathf.Clamp(Mathf.RoundToInt(baseColor.g * tint.g), 0, 255),
+                                (byte)Mathf.Clamp(Mathf.RoundToInt(baseColor.b * tint.b), 0, 255),
+                                baseColor.a);
+                        }
                         c.a = (byte)Mathf.RoundToInt(baseColor.a * Mathf.Clamp01(s.alpha));
                         colors[vi + j] = c;
+
+                        // the SDF shader sharpens edges by |uv0.w| (its sign means bold), so a smaller value gives soft, blurred letters
+                        if (uvs0 != null && buv != null && vi + j < uvs0.Length && vi + j < buv.Length)
+                        {
+                            Vector4 uv = buv[vi + j];
+                            uv.w *= Mathf.Lerp(1f, SoftestScale, Mathf.Clamp01(s.blur));
+                            uvs0[vi + j] = uv;
+                        }
                     }
                 }
             }
 
-            text.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices | TMP_VertexDataUpdateFlags.Colors32);
+            text.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices | TMP_VertexDataUpdateFlags.Colors32 | TMP_VertexDataUpdateFlags.Uv0);
         }
 
         public void Restore()

@@ -62,6 +62,10 @@ namespace MotionStudio
 
         [Tooltip("Seconds one piece takes to arrive. Leave at 0 to use Duration.")]
         [Min(0f)] public float pieceDuration = 0f;
+        [Tooltip("Every piece starts soft and sharpens as it arrives (TextMeshPro).")] public bool blur;
+        [Range(0f, 1f)] public float blurAmount = 1f;
+        [Min(0f), Tooltip("Seconds to sharpen. 0 = 0.9 x the piece duration.")] public float blurDuration = 0f;
+        public MotionEase blurEase = MotionEase.CubicOut;
 
         [Header("After arriving")]
         [Tooltip("Gently cycle the color over time once the item has arrived.")]
@@ -224,6 +228,8 @@ namespace MotionStudio
             if (fade)
                 alpha = Mathf.Lerp(fadeFrom * restAlpha, restAlpha, MotionEasing.Evaluate(fadeEase, Mathf.Clamp01(time / Mathf.Max(0.0001f, fadeTime))));
             group.alpha = time <= 0f && fade ? fadeFrom * restAlpha : alpha;
+            if (graphic != null)
+                graphic.enabled = group.alpha > 0.01f;
 
             Vector2 offset = Vector2.zero;
             if (direction != MotionDirection.None)
@@ -253,6 +259,8 @@ namespace MotionStudio
             if (adapter.NeedsBegin(split))
                 adapter.Begin(split);
 
+            if (graphic != null)
+                graphic.enabled = true;
             group.alpha = restAlpha;
             rect.anchoredPosition = restPosition;
             rect.localScale = restScale;
@@ -285,6 +293,12 @@ namespace MotionStudio
                 }
                 else
                     state.scale = 1f;
+
+                if (blur)
+                {
+                    float blurTime = blurDuration > 0f ? blurDuration : unitDuration * 0.9f;
+                    state.blur = blurAmount * (1f - MotionEasing.Evaluate(blurEase, Mathf.Clamp01(local / Mathf.Max(0.0001f, blurTime))));
+                }
 
                 if (changeColor)
                 {
@@ -372,7 +386,10 @@ namespace MotionStudio
             rect.localScale = restScale;
             rect.localRotation = Quaternion.Euler(0f, 0f, restRotation);
             if (graphic != null)
+            {
                 graphic.color = restColor;
+                graphic.enabled = true;
+            }
         }
 
         // ---------- life after arriving ----------

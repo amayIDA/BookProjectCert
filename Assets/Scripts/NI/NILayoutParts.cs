@@ -21,13 +21,13 @@ public class NIFlowLayout : LayoutGroup
         for (int i = 0; i < rectChildren.Count; i++)
             widest = Mathf.Max(widest, LayoutUtility.GetPreferredSize(rectChildren[i], 0));
 
-        SetLayoutInputForAxis(widest + padding.horizontal, LayoutUtility.DefaultMaxSize, widest + padding.horizontal, 1f, 0);
+        SetLayoutInputForAxis(widest + padding.horizontal, widest + padding.horizontal, 1f, 0);
     }
 
     public override void CalculateLayoutInputVertical()
     {
         float height = Measure(Mathf.Max(1f, rectTransform.rect.width - padding.horizontal));
-        SetLayoutInputForAxis(height + padding.vertical, LayoutUtility.DefaultMaxSize, height + padding.vertical, -1f, 1);
+        SetLayoutInputForAxis(height + padding.vertical, height + padding.vertical, 0f, 1);
     }
 
     public override void SetLayoutHorizontal()

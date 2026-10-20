@@ -345,7 +345,7 @@ public static class BookSceneSetup
 
     static void DisableExtraListeners()
     {
-        var listeners = Object.FindObjectsByType<AudioListener>();
+        var listeners = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var listener in listeners)
         {
             if (listener.gameObject.name != "Main Camera")

@@ -35,6 +35,11 @@ namespace MotionStudio.Editor
             get { return playing; }
         }
 
+        public static bool HasTarget
+        {
+            get { return sequence != null || single != null; }
+        }
+
         public static float Time
         {
             get { return time; }

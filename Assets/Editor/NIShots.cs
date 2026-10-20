@@ -7,13 +7,18 @@ using UnityEngine.UI;
 public static class NIShots
 {
     [MenuItem("Tools/National Initiative/Capture Displays")]
+    public static void CaptureDisplays()
+    {
+        Capture();
+    }
+
     public static string Capture(bool blackBackground = false)
     {
         string dir = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Temp", "NIShots");
         Directory.CreateDirectory(dir);
         string report = string.Empty;
         string[] names = { "TouchScreen_Canvas", "LargeLEDCircle_Canvas", "ContentDisplay_Canvas" };
-        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int n = 0; n < names.Length; n++)
         {
             Canvas canvas = null;

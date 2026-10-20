@@ -54,7 +54,7 @@ public static class NIBuilderMenu
         }
 
         int count = 0;
-        Text[] texts = Object.FindObjectsByType<Text>(FindObjectsInactive.Include);
+        Text[] texts = Object.FindObjectsByType<Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < texts.Length; i++)
         {
             Transform t = texts[i].transform;

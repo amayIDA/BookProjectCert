@@ -10,7 +10,7 @@ public static class NIBuild
 {
     public static Canvas FindCanvas(string canvasName)
     {
-        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < canvases.Length; i++)
         {
             if (canvases[i].name == canvasName)

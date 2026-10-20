@@ -248,7 +248,7 @@ public static class NIScenery
     public static void BuildLed(CircularMenu menu)
     {
         Canvas led = null;
-        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < canvases.Length; i++)
         {
             if (canvases[i].name == "LargeLEDCircle_Canvas")

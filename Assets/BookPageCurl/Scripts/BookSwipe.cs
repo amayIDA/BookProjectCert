@@ -10,6 +10,7 @@ using UnityEngine.UI;
 public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
     public Book book;
+    public Book mirror;
     public BookSwipe linkedSwipe;
     public BookSwipe[] alsoFlip;
     public int firstPage;
@@ -21,6 +22,11 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     AudioSource audioSource;
     bool tracking;
     bool flipping;
+
+    public bool IsFlipping
+    {
+        get { return flipping; }
+    }
     bool holdingCorner;
     bool holdNext;
     int pointerId;
@@ -158,6 +164,15 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
             book.DragLeftPageToPoint(point);
     }
 
+    /// <summary>Stops a turn that is in progress. The book must be snapped to a page afterwards.</summary>
+    public void CancelFlip()
+    {
+        StopAllCoroutines();
+        flipping = false;
+        tracking = false;
+        holdingCorner = false;
+    }
+
     public void BeginFlip(bool next)
     {
         if (!CanFlip(next))
@@ -226,6 +241,8 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
 
         flipping = true;
         book.followPointer = false;
+        if (mirror != null)
+            mirror.followPointer = false;
 
         int frames = Mathf.Max(8, animationFrames);
         float frameTime = flipDuration / frames;
@@ -236,10 +253,16 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
         if (next)
         {
             float x = centerX + halfSpan;
-            book.DragRightPageToPoint(CurlPoint(x, centerX, halfSpan, height));
+            Vector3 point = CurlPoint(x, centerX, halfSpan, height);
+            book.DragRightPageToPoint(point);
+            if (mirror != null)
+                mirror.DragRightPageToPoint(point);
             for (int i = 0; i < frames; i++)
             {
-                book.UpdateBookRTLToPoint(CurlPoint(x, centerX, halfSpan, height));
+                point = CurlPoint(x, centerX, halfSpan, height);
+                book.UpdateBookRTLToPoint(point);
+                if (mirror != null)
+                    mirror.UpdateBookRTLToPoint(point);
                 yield return new WaitForSeconds(frameTime);
                 x -= step;
             }
@@ -247,16 +270,24 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
         else
         {
             float x = centerX - halfSpan;
-            book.DragLeftPageToPoint(CurlPoint(x, centerX, halfSpan, height));
+            Vector3 point = CurlPoint(x, centerX, halfSpan, height);
+            book.DragLeftPageToPoint(point);
+            if (mirror != null)
+                mirror.DragLeftPageToPoint(point);
             for (int i = 0; i < frames; i++)
             {
-                book.UpdateBookLTRToPoint(CurlPoint(x, centerX, halfSpan, height));
+                point = CurlPoint(x, centerX, halfSpan, height);
+                book.UpdateBookLTRToPoint(point);
+                if (mirror != null)
+                    mirror.UpdateBookLTRToPoint(point);
                 yield return new WaitForSeconds(frameTime);
                 x += step;
             }
         }
 
         book.ReleasePage();
+        if (mirror != null)
+            mirror.ReleasePage();
         yield return new WaitForSeconds(0.3f);
         flipping = false;
     }

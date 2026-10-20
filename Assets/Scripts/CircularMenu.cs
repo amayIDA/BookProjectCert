@@ -991,7 +991,7 @@ public class CircularMenu : MonoBehaviour
             if (surface == null)
                 surface = surfaces[i];
             else
-                DestroyObject(surfaces[i]);
+                Destroy(surfaces[i]);
         }
 
         if (surface == null)
@@ -1529,7 +1529,7 @@ public class CircularMenu : MonoBehaviour
 
     static Canvas FindCanvas(string canvasName)
     {
-        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < canvases.Length; i++)
         {
             if (canvases[i].name == canvasName)
