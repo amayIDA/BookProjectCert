@@ -131,6 +131,8 @@ public class BookScreens : MonoBehaviour
     Sprite[] stationaryMain;
     int flowPages;
     bool questionOpen;
+    int closingIndex = -1;
+    int lastDetail = -1;
     bool beginHereMode;
     bool scenariosShown;
     bool scenarioPending;
@@ -494,10 +496,17 @@ public class BookScreens : MonoBehaviour
         sceneLeft = PageList(LeftHalf());
         sceneRight = PageList(RightHalf());
         sceneBook = PageList(MainScreen());
+        closingIndex = -1;
+        for (int i = 0; i < sceneLeft.Length; i++)
+        {
+            if (sceneLeft[i] != null && sceneLeft[i].name == "Page 14")
+                closingIndex = i;
+        }
+
         flowPages = sceneBook.Length;
         for (int i = 0; i < sceneBook.Length; i++)
         {
-            if (sceneBook[i].name.StartsWith("Question"))
+            if (sceneBook[i].name.StartsWith("Question") || sceneBook[i].name == "Closing")
             {
                 flowPages = i;
                 break;
@@ -1225,8 +1234,16 @@ public class BookScreens : MonoBehaviour
                 return;
             if (next)
             {
-                if (leftIndex >= FirstDetailPage && leftIndex + 1 < sceneLeft.Length)
-                    TurnSidesTo(leftIndex + 1);
+                if (closingIndex > 0 && leftIndex >= FirstDetailPage && leftIndex < closingIndex)
+                {
+                    TurnSidesTo(closingIndex);
+                    ShowClosing();
+                }
+            }
+            else if (leftIndex == closingIndex && lastDetail >= 0)
+            {
+                // back from the closing spread to the scenario that was open
+                TurnSidesBack(lastDetail, lastDetail);
             }
             else if (leftIndex >= FirstDetailPage)
             {
@@ -1510,8 +1527,11 @@ public class BookScreens : MonoBehaviour
         SetControlBooksActive(false);
         SetMainBookActive(false);
         // the main page stays up, even when the new click does not change it
-        ActivateOnly(sceneBook, shownStep);
-        RaisePagePanels();
+        if (!questionOpen)
+        {
+            ActivateOnly(sceneBook, shownStep);
+            RaisePagePanels();
+        }
     }
 
     /// <summary>Ends a turn of the spread: the new pages are shown and the page curl is put away.</summary>
@@ -1531,7 +1551,7 @@ public class BookScreens : MonoBehaviour
         }
 
         sidesTurnRight = -1;
-        if (book != null)
+        if (book != null && !questionOpen)
         {
             // the main page stays up, even if the turn was interrupted before it was shown
             shownStep = Mathf.Clamp((book.currentPage - 1) / 2, 0, PageCount() - 1);
@@ -1599,8 +1619,13 @@ public class BookScreens : MonoBehaviour
             if (contextRow.Length > 0)
             {
                 // only Begin Here lets the user turn the spread, from one scenario detail to the next
-                if (contextRow == "Begin Here" && leftIndex >= FirstDetailPage && leftIndex + 1 < sceneLeft.Length)
-                    TurnSidesTo(leftIndex + 1);
+                // turning the page on a scenario ends the tour: the closing spread
+                if (contextRow == "Begin Here" && closingIndex > 0 && leftIndex >= FirstDetailPage && leftIndex < closingIndex)
+                {
+                    TurnSidesTo(closingIndex);
+                    ShowClosing();
+                }
+
                 return;
             }
 
@@ -1671,6 +1696,8 @@ public class BookScreens : MonoBehaviour
     void TurnSidesTo(int to)
     {
         CloseQuestion();
+        if (to >= FirstDetailPage && (closingIndex < 0 || to < closingIndex))
+            lastDetail = to;
         if (spreadSwipe == null || spreadBook == null || leftBaked == null || to < 1 || to >= sceneLeft.Length || to >= sceneRight.Length)
             return;
         sidesStay = true;
@@ -1750,6 +1777,24 @@ public class BookScreens : MonoBehaviour
                 page = i;
                 break;
             }
+        }
+
+        if (page < 0)
+            return;
+        questionOpen = true;
+        ActivateOnly(sceneBook, page);
+        RaisePagePanels();
+        StartCoroutine(FadePageIn(sceneBook[page]));
+    }
+
+    /// <summary>The main canvas shows the closing screen ("That's all for now") while the spread turns to its closing pages.</summary>
+    void ShowClosing()
+    {
+        int page = -1;
+        for (int i = flowPages; i < sceneBook.Length; i++)
+        {
+            if (sceneBook[i].name == "Closing")
+                page = i;
         }
 
         if (page < 0)

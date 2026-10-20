@@ -115,7 +115,9 @@ public static class AnimatedIconTools
         icon.clip = clip;
         icon.loop = large;
         icon.crop = crop;
-        icon.poster = poster != null ? poster : icon.poster;
+        // the still picture is a frame of the same video, so a page copied for a page turn shows the same icon
+        Sprite still = ScreenKit.ScreenPages.LoadSprite("Assets/UI/Animated Icons/Posters/" + video + ".png");
+        icon.poster = still != null ? still : (poster != null ? poster : icon.poster);
         icon.startDelay = 0f;
 
         SoftBob drift = target.GetComponent<SoftBob>();
@@ -148,6 +150,7 @@ public static class AnimatedIconTools
         count += Large("RightCanvas", "Page 2", "BigIcon", "Discover_this_book");
         for (int i = 0; i < 5; i++)
             count += Large("RightCanvas", "Page " + (9 + i), "BigIcon", ScenarioVideos[i]);
+        count += AddLarge("LeftCanvas", "Page 14", "Thats_all", new Vector2(0.5f, 0.5f), 520f, 0.3f);
         count += AddLarge("RightCanvas", "Page 7", "Thats_all", new Vector2(0.5f, 0.66f), 280f, 0.2f);
         count += AddLarge("RightCanvas", "Page 3", "Turn_the_page", new Vector2(0.5f, 0.57f), 480f, 0.3f);
 
@@ -201,7 +204,7 @@ public static class AnimatedIconTools
     }
 
     /// <summary>A new large icon on a page that had none. It fades in with the page's own animation and then loops and drifts.</summary>
-    static int AddLarge(string canvas, string pageName, string video, Vector2 anchor, float pixels, float at)
+    public static int AddLarge(string canvas, string pageName, string video, Vector2 anchor, float pixels, float at)
     {
         Transform page = Page(canvas, pageName);
         if (page == null)
