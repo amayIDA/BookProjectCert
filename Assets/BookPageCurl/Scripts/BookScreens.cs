@@ -131,6 +131,9 @@ public class BookScreens : MonoBehaviour
     Sprite[] stationaryMain;
     int flowPages;
     bool questionOpen;
+    [Tooltip("Seconds the closing screen (That's all for now) stays before the book goes back to the start by itself. 0 turns it off.")]
+    public float closingIdleSeconds = 10f;
+    Coroutine closingTimer;
     bool riffling;
     readonly List<RiffleStash> riffleStash = new List<RiffleStash>();
     int closingIndex = -1;
@@ -1229,6 +1232,7 @@ public class BookScreens : MonoBehaviour
     {
         if (book == null || riffling)
             return;
+        StopClosingTimer();
         if (Time.frameCount == lastSwipeFrame)
             return;
         lastSwipeFrame = Time.frameCount;
@@ -1252,6 +1256,10 @@ public class BookScreens : MonoBehaviour
                 {
                     TurnSidesTo(closingIndex);
                     ShowClosing();
+                }
+                else if (closingIndex > 0 && leftIndex == closingIndex)
+                {
+                    StartClosingTimer();
                 }
             }
             else if (leftIndex == closingIndex && lastDetail >= 0)
@@ -1588,6 +1596,8 @@ public class BookScreens : MonoBehaviour
     {
         if (swipeGesture || riffling)
             return;
+        // any touch on the book means the visitor is still here
+        StopClosingTimer();
 
         // Begin Here again plays its page once more: the video and the text come in again
         if (action != ButtonAction.TurnPage && action != ButtonAction.Home && id == "Begin Here" && beginHereMode
@@ -1645,6 +1655,11 @@ public class BookScreens : MonoBehaviour
                 {
                     TurnSidesTo(closingIndex);
                     ShowClosing();
+                }
+                else if (closingIndex > 0 && leftIndex == closingIndex)
+                {
+                    // a touch on the closing screen starts the wait again
+                    StartClosingTimer();
                 }
 
                 return;
@@ -1978,6 +1993,46 @@ public class BookScreens : MonoBehaviour
         ActivateOnly(sceneBook, page);
         RaisePagePanels();
         StartCoroutine(FadePageIn(sceneBook[page]));
+        StartClosingTimer();
+    }
+
+    void StopClosingTimer()
+    {
+        if (closingTimer != null)
+        {
+            StopCoroutine(closingTimer);
+            closingTimer = null;
+        }
+    }
+
+    void StartClosingTimer()
+    {
+        StopClosingTimer();
+        if (closingIdleSeconds > 0f)
+            closingTimer = StartCoroutine(ClosingTimer());
+    }
+
+    /// <summary>
+    /// Once the closing screen is on both displays and nobody touches anything, the book goes back to the start by itself
+    /// (the same page riffle as the Home button, ending on a completely fresh first screen).
+    /// </summary>
+    IEnumerator ClosingTimer()
+    {
+        // the countdown starts when the turn to the closing screen has finished
+        while (IsAnyFlipping() || scenarioPending)
+            yield return null;
+        float left = closingIdleSeconds;
+        while (left > 0f)
+        {
+            left -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        closingTimer = null;
+        if (riffling || leftIndex != closingIndex)
+            yield break;
+        swipeGesture = false;
+        Press(ButtonAction.Home, 0, "");
     }
 
     /// <summary>Back to the page the main canvas showed before a question was opened.</summary>
