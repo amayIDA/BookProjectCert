@@ -405,6 +405,12 @@ public class BookScreens : MonoBehaviour
             scaler.matchWidthOrHeight = 0.5f;
     }
 
+    /// <summary>With a looping video behind the pages, the baked page faces are see-through so the video keeps playing while a page turns.</summary>
+    static bool HasBackVideo(Component canvas)
+    {
+        return canvas != null && canvas.transform.Find("BackVideo") != null;
+    }
+
     static Color PanelColor(Component canvas)
     {
         if (canvas != null)
@@ -640,6 +646,9 @@ public class BookScreens : MonoBehaviour
         int width = Mathf.RoundToInt(root.sizeDelta.x);
         int height = Mathf.RoundToInt(root.sizeDelta.y);
         camera.orthographicSize = height * 0.5f;
+        bool clear = HasBackVideo(MainScreen());
+        if (clear)
+            background = new Color(background.r, background.g, background.b, 0f);
         Image paper = NewImage("Paper", root, background);
         Stretch(paper.rectTransform);
         draw(root);
@@ -652,7 +661,7 @@ public class BookScreens : MonoBehaviour
 
         RenderTexture previous = RenderTexture.active;
         RenderTexture.active = texture;
-        var image = new Texture2D(width, height, TextureFormat.RGB24, false);
+        var image = new Texture2D(width, height, clear ? TextureFormat.RGBA32 : TextureFormat.RGB24, false);
         image.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
         image.Apply();
         RenderTexture.active = previous;
@@ -1889,6 +1898,9 @@ public class BookScreens : MonoBehaviour
 
     Sprite BakePanel(RectTransform source, int width, int height, Component screen, Color background, float cameraY, bool usePanelImage)
     {
+        bool seeThrough = usePanelImage && HasBackVideo(screen);
+        if (seeThrough)
+            background = new Color(background.r, background.g, background.b, 0f);
         var cameraObject = new GameObject("PanelBakerCamera");
         cameraObject.transform.position = new Vector3(0f, cameraY, -10f);
         Camera camera = cameraObject.AddComponent<Camera>();
@@ -1911,7 +1923,11 @@ public class BookScreens : MonoBehaviour
         rect.sizeDelta = new Vector2(width, height);
         rect.localScale = Vector3.one;
 
-        if (usePanelImage)
+        if (seeThrough)
+        {
+            // nothing behind the page content: the video shows through
+        }
+        else if (usePanelImage)
             StampPanel(rect, screen);
         else
         {
@@ -1949,7 +1965,7 @@ public class BookScreens : MonoBehaviour
         camera.Render();
         RenderTexture previous = RenderTexture.active;
         RenderTexture.active = texture;
-        var image = new Texture2D(width, height, TextureFormat.RGB24, false);
+        var image = new Texture2D(width, height, seeThrough ? TextureFormat.RGBA32 : TextureFormat.RGB24, false);
         image.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
         image.Apply();
         RenderTexture.active = previous;
