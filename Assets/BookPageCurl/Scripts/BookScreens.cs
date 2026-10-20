@@ -131,7 +131,9 @@ public class BookScreens : MonoBehaviour
     bool beginHereMode;
     bool scenariosShown;
     bool scenarioPending;
-    [Range(0f, 1f), Tooltip("How solid the page is while it turns over the background video. 0 shows only the content, 1 hides the video.")]
+    [Tooltip("Off: pages are drawn with their full artwork while they turn, like a real sheet of paper. On: the turning pages are see-through so the background video shows through them.")]
+    public bool seeThroughTurns;
+    [Range(0f, 1f), Tooltip("How solid the page is while it turns when See Through Turns is on.")]
     public float turningPaperAlpha = 0.7f;
     [Tooltip("Index of the left and right pages (the Begin Here scenario lists) shown when the page is turned after Begin Here. The first page is 0.")]
     public int scenarioPage = 7;
@@ -408,9 +410,9 @@ public class BookScreens : MonoBehaviour
     }
 
     /// <summary>With a looping video behind the pages, the baked page faces are see-through so the video keeps playing while a page turns.</summary>
-    static bool HasBackVideo(Component canvas)
+    bool HasBackVideo(Component canvas)
     {
-        return canvas != null && canvas.transform.Find("BackVideo") != null;
+        return seeThroughTurns && canvas != null && canvas.transform.Find("BackVideo") != null;
     }
 
     static Color PanelColor(Component canvas)
