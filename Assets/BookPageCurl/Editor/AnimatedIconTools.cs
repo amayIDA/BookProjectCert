@@ -92,6 +92,16 @@ public static class AnimatedIconTools
         image.color = tint;
         image.raycastTarget = false;
 
+        // an animation on this icon remembers the old picture's colour (white for a coloured sprite) and puts it back
+        // whenever the page starts; it must remember the tint instead, or the icon turns white on a white page
+        foreach (MotionItem item in target.GetComponents<MotionItem>())
+        {
+            item.restColor = tint;
+            if (item.changeColor)
+                item.colorTo = tint;
+            EditorUtility.SetDirty(item);
+        }
+
         Rect crop = Crop(video);
         image.uvRect = crop;
         float aspect = crop.width * FrameWidth / (crop.height * FrameHeight);
