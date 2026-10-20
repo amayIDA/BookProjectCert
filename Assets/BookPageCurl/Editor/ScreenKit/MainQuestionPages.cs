@@ -33,9 +33,9 @@ namespace ScreenKit
             new[] { "ENGLISH |", "FOR HR", "Covering recruitment, Selection, Employee Relations, and HR Development.\nAccurate HR documentation and confident interviews and\ndisciplinary conversations." },
             new[] { "ENGLISH FOR", "ADMINISTRATIVE SUPPORT (A2 TO B1)", "Immediately applicable office English and readiness to collaborate in meetings." },
             new[] { "BUSINESS |", "ENGLISH 4", "Covers interview and Cross-cultural readiness.\nStronger interview performance and a more credible internal talent pipeline." },
-            new[] { "LEADERSHIP ENGLISH", "PROMOTION PATHWAY", "Technical strength matched with the language to lead, so skill is never held back." },
-            new[] { "PRESENTING AND NEGOTIATING", "MANAGERS", "Structure, persuade and negotiate clearly in front of clients and stakeholders." },
-            new[] { "EXECUTIVE BRIEFING", "EMERGING LEADERS", "Concise, confident briefings that earn the attention of senior executives." },
+            new[] { "BUSINESS ENGLISH\nLADDER", "", "Progress from workplace vocabulary to presentations, negotiation,\nand a completed project, with measurable gains." },
+            new[] { "ADVANCED PRESENTATION\nSKILLS", "", "Confidence in high-stakes settings and presentation-ready\noutcomes in the UAE context." },
+            new[] { "EXECUTIVE PRESENTATIONS\n& BRIEFINGS", "", "Covering influence, clarity, and presence.\nA leadership presence toolkit and readiness for executive visibility." },
             new[] { "BOARDROOM ENGLISH", "BOARDS, INVESTORS, REGULATORS", "Authoritative presentation skills for the audiences that matter most." },
             new[] { "MEASURABLE OUTCOMES", "LANGUAGE ROI REPORTING", "Baselines, progress tracking and proficiency gains reported as clear ROI." },
             new[] { "SPONSORED PROGRAMMES", "LICENSING AND STUDY ABROAD", "Structured pathways for staff licensing, overseas study and internal promotion." }
@@ -107,9 +107,16 @@ namespace ScreenKit
             s.Glow(card, 0.6f, 0.55f, 0.51f, 1f, Beat.Glow);
 
             string[] words = Content[index];
-            TMP_Text programme = s.Text(card, "Programme", (words[0].Length == 0 ? "" : words[0].EndsWith("|") ? words[0].TrimEnd('|') : words[0] + "\n") + "<color=#8C9BFF>" + words[1] + "</color>", st.regular, 66, st.white, 0.035f, 0.56f, 0.88f, 0.95f, TextAlignmentOptions.MidlineLeft);
+            // first part white, second part accent; with no second part the whole header is white
+            string header = words[1].Length == 0
+                ? words[0]
+                : (words[0].Length == 0 ? "" : words[0].EndsWith("|") ? words[0].TrimEnd('|') : words[0] + "\n") + "<color=#8C9BFF>" + words[1] + "</color>";
+            TMP_Text programme = s.Text(card, "Programme", header, st.regular, 66, st.white, 0.035f, 0.56f, 0.88f, 0.95f, TextAlignmentOptions.MidlineLeft);
             programme.characterSpacing = 8f; programme.lineSpacing = -6f;
-            if (words[1].Length > 26)
+            int longest = 0;
+            foreach (string line in (words[0] + "\n" + words[1]).Split('\n'))
+                longest = Mathf.Max(longest, line.Replace("|", "").Length);
+            if (longest > 22)
             {
                 // a long line keeps to one line, as in the design
                 programme.fontSize = 52; programme.characterSpacing = 5f;
