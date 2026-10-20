@@ -48,6 +48,7 @@ public class LoopVideo : MonoBehaviour
             player.clip = clip;
             player.sendFrameReadyEvents = true;
             player.frameReady += OnFrameReady;
+            player.errorReceived += (source, message) => Debug.LogWarning("LoopVideo " + name + ": " + message);
         }
 
         for (int i = 0; i < targets.Length; i++)
@@ -62,6 +63,14 @@ public class LoopVideo : MonoBehaviour
             image.uvRect = cover ? CoverRect(image) : targets[i].uv;
         }
 
+        StartCoroutine(Begin());
+    }
+
+    System.Collections.IEnumerator Begin()
+    {
+        player.Prepare();
+        while (!player.isPrepared)
+            yield return null;
         player.Play();
     }
 
@@ -102,6 +111,7 @@ public class LoopVideo : MonoBehaviour
 
     void OnDisable()
     {
+        StopAllCoroutines();
         if (player != null)
             player.Pause();
     }

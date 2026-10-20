@@ -448,7 +448,7 @@ public class BookScreens : MonoBehaviour
         for (int i = 0; i < canvas.transform.childCount; i++)
         {
             Transform child = canvas.transform.GetChild(i);
-            if (child.name != "Panel" && child.name != "PagePanels")
+            if (child.name != "Panel" && child.name != "PagePanels" && child.name != "BackVideo")
                 child.gameObject.SetActive(false);
         }
     }
