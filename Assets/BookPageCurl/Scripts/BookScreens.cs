@@ -128,13 +128,10 @@ public class BookScreens : MonoBehaviour
     Sprite stashedLeft;
     Sprite stashedRight;
     int stashedSpread = -1;
+    Sprite[] stationaryMain;
     bool beginHereMode;
     bool scenariosShown;
     bool scenarioPending;
-    [Tooltip("Off: pages are drawn with their full artwork while they turn, like a real sheet of paper. On: the turning pages are see-through so the background video shows through them.")]
-    public bool seeThroughTurns;
-    [Range(0f, 1f), Tooltip("How solid the page is while it turns when See Through Turns is on.")]
-    public float turningPaperAlpha = 0.7f;
     [Tooltip("Index of the left and right pages (the Begin Here scenario lists) shown when the page is turned after Begin Here. The first page is 0.")]
     public int scenarioPage = 7;
     const int FirstDetailPage = 8;
@@ -410,9 +407,13 @@ public class BookScreens : MonoBehaviour
     }
 
     /// <summary>With a looping video behind the pages, the baked page faces are see-through so the video keeps playing while a page turns.</summary>
-    bool HasBackVideo(Component canvas)
+    // where the white page sits inside each half of the spread artwork (fractions, from the bottom left)
+    static readonly Rect LeftPaper = new Rect(0.086f, 0.130f, 0.866f, 0.762f);
+    static readonly Rect RightPaper = new Rect(0.049f, 0.130f, 0.866f, 0.762f);
+
+    static bool HasBackVideo(Component canvas)
     {
-        return seeThroughTurns && canvas != null && canvas.transform.Find("BackVideo") != null;
+        return canvas != null && canvas.transform.Find("BackVideo") != null;
     }
 
     static Color PanelColor(Component canvas)
@@ -650,9 +651,6 @@ public class BookScreens : MonoBehaviour
         int width = Mathf.RoundToInt(root.sizeDelta.x);
         int height = Mathf.RoundToInt(root.sizeDelta.y);
         camera.orthographicSize = height * 0.5f;
-        bool clear = HasBackVideo(MainScreen());
-        if (clear)
-            background = new Color(background.r, background.g, background.b, turningPaperAlpha);
         Image paper = NewImage("Paper", root, background);
         Stretch(paper.rectTransform);
         draw(root);
@@ -665,7 +663,7 @@ public class BookScreens : MonoBehaviour
 
         RenderTexture previous = RenderTexture.active;
         RenderTexture.active = texture;
-        var image = new Texture2D(width, height, clear ? TextureFormat.RGBA32 : TextureFormat.RGB24, false);
+        var image = new Texture2D(width, height, TextureFormat.RGB24, false);
         image.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
         image.Apply();
         RenderTexture.active = previous;
@@ -789,6 +787,8 @@ public class BookScreens : MonoBehaviour
         RectTransform bookRect = CreateRect("ExperienceBook", canvas.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(1500f, 860f), Vector2.zero);
         swipe = WireBook(bookRect, canvas, pages, generatedBack != null ? generatedBack : pages[0], true);
         book = swipe != null ? swipe.book : null;
+        if (book != null)
+            book.stationaryPages = stationaryMain;
     }
 
     BookSwipe WireBook(RectTransform bookRect, Canvas canvas, Sprite[] pages, Sprite background, bool catcherRaycast, int openingPage = 0)
@@ -875,7 +875,7 @@ public class BookScreens : MonoBehaviour
         rightBaked = rightPages;
         Sprite[] spreadPages = SpreadPages(leftPages, rightPages);
         spreadView = CreateSpreadView(left.parent);
-        spreadSwipe = WireBook(spreadView.GetChild(0) as RectTransform, spread, spreadPages, PanelPaper(left), false, 1);
+        spreadSwipe = WireBook(spreadView.GetChild(0) as RectTransform, spread, spreadPages, PanelPaper(left, HasBackVideo(left)), false, 1);
         spreadBook = spreadSwipe != null ? spreadSwipe.book : null;
         if (spreadSwipe != null)
         {
@@ -895,11 +895,22 @@ public class BookScreens : MonoBehaviour
         Sprite panel = PanelPaper(screen);
         generatedBack = panel;
         var pages = new List<Sprite>();
+        bool live = HasBackVideo(screen);
+        Sprite empty = live ? Sprite.Create(new Texture2D(2, 2, TextureFormat.RGBA32, false), new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0.5f), 100f) : null;
+        var still = new List<Sprite>();
         for (int i = 0; i < sceneBook.Length; i++)
         {
             pages.Add(panel);
             pages.Add(BakePanel(sceneBook[i], width, height, screen, 4000f + i * 40f));
+            if (live)
+            {
+                // what lies under a turning sheet is only the page content, so the video keeps playing there
+                still.Add(empty);
+                still.Add(BakePanel(sceneBook[i], width, height, screen, 4000f + i * 40f + 20f, true));
+            }
         }
+
+        stationaryMain = live ? still.ToArray() : null;
         return pages.ToArray();
     }
 
@@ -929,7 +940,11 @@ public class BookScreens : MonoBehaviour
             int height = Mathf.RoundToInt(page.y);
             var baked = new Sprite[source.Length];
             for (int i = 0; i < source.Length; i++)
-                baked[i] = BakePanel(source[i], width, height, screen, displayOne ? 6000f : 6500f);
+            {
+                // with the video behind, only the sheet of paper (the white page) turns; the book around it stays and keeps playing
+                Rect? paper = HasBackVideo(screen) ? (displayOne ? LeftPaper : RightPaper) : (Rect?)null;
+                baked[i] = BakePanel(source[i], width, height, screen, displayOne ? 6000f : 6500f, false, paper);
+            }
             return baked;
         }
 
@@ -1870,10 +1885,10 @@ public class BookScreens : MonoBehaviour
         return panel != null ? panel.GetComponent<Image>() : null;
     }
 
-    Sprite PanelPaper(Component canvas)
+    Sprite PanelPaper(Component canvas, bool transparent = false)
     {
         Vector2 page = ReferenceSize(canvas);
-        return BakePanel(null, Mathf.RoundToInt(page.x), Mathf.RoundToInt(page.y), canvas, 7200f);
+        return BakePanel(null, Mathf.RoundToInt(page.x), Mathf.RoundToInt(page.y), canvas, 7200f, transparent);
     }
 
     void StampPanel(RectTransform root, Component canvas)
@@ -1895,16 +1910,22 @@ public class BookScreens : MonoBehaviour
         return BakePanel(source, width, height, null, background, cameraY, false);
     }
 
-    Sprite BakePanel(RectTransform source, int width, int height, Component screen, float cameraY)
+    Sprite BakePanel(RectTransform source, int width, int height, Component screen, float cameraY, bool transparent = false, Rect? keep = null)
     {
-        return BakePanel(source, width, height, screen, PanelColor(screen), cameraY, true);
+        return BakePanel(source, width, height, screen, PanelColor(screen), cameraY, true, transparent, keep);
     }
 
-    Sprite BakePanel(RectTransform source, int width, int height, Component screen, Color background, float cameraY, bool usePanelImage)
+    /// <summary>
+    /// Bakes a page. transparent: no paper at all, just the page content. keep: only this part (0 to 1, from the bottom left)
+    /// is paper, everything outside it is see-through, so the sheet is a sheet of paper and not the whole book.
+    /// </summary>
+    Sprite BakePanel(RectTransform source, int width, int height, Component screen, Color background, float cameraY, bool usePanelImage, bool transparent = false, Rect? keep = null)
     {
-        bool seeThrough = usePanelImage && HasBackVideo(screen);
-        if (seeThrough)
-            background = new Color(background.r, background.g, background.b, turningPaperAlpha);
+        bool seeThrough = usePanelImage && (transparent || keep.HasValue);
+        if (transparent)
+            background = new Color(background.r, background.g, background.b, 0f);
+        else if (keep.HasValue)
+            background = new Color(background.r, background.g, background.b, 0f);
         var cameraObject = new GameObject("PanelBakerCamera");
         cameraObject.transform.position = new Vector3(0f, cameraY, -10f);
         Camera camera = cameraObject.AddComponent<Camera>();
@@ -1927,11 +1948,7 @@ public class BookScreens : MonoBehaviour
         rect.sizeDelta = new Vector2(width, height);
         rect.localScale = Vector3.one;
 
-        if (seeThrough)
-        {
-            // nothing behind the page content: the video shows through
-        }
-        else if (usePanelImage)
+        if (usePanelImage && !transparent)
             StampPanel(rect, screen);
         else
         {
@@ -1971,6 +1988,8 @@ public class BookScreens : MonoBehaviour
         RenderTexture.active = texture;
         var image = new Texture2D(width, height, seeThrough ? TextureFormat.RGBA32 : TextureFormat.RGB24, false);
         image.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
+        if (keep.HasValue)
+            ClearOutside(image, keep.Value);
         image.Apply();
         RenderTexture.active = previous;
         camera.targetTexture = null;
@@ -1981,6 +2000,32 @@ public class BookScreens : MonoBehaviour
         Destroy(canvasObject);
         Destroy(cameraObject);
         return sprite;
+    }
+
+    static void ClearOutside(Texture2D image, Rect keep)
+    {
+        int width = image.width;
+        int height = image.height;
+        int x0 = Mathf.RoundToInt(keep.xMin * width), x1 = Mathf.RoundToInt(keep.xMax * width);
+        int y0 = Mathf.RoundToInt(keep.yMin * height), y1 = Mathf.RoundToInt(keep.yMax * height);
+        Color32[] pixels = image.GetPixels32();
+        for (int y = 0; y < height; y++)
+        {
+            bool rowInside = y >= y0 && y < y1;
+            int row = y * width;
+            for (int x = 0; x < width; x++)
+            {
+                if (rowInside && x >= x0 && x < x1)
+                {
+                    pixels[row + x].a = 255;
+                    continue;
+                }
+
+                pixels[row + x] = new Color32(0, 0, 0, 0);
+            }
+        }
+
+        image.SetPixels32(pixels);
     }
 
     Sprite SolidSprite(Color color)

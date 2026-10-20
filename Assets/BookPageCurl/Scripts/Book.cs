@@ -22,6 +22,14 @@ public class Book : MonoBehaviour {
     RectTransform BookPanel;
     public Sprite background;
     public Sprite[] bookPages;
+    [Tooltip("Optional: what lies under a turning sheet (the pages that stay put). When set, the sheet is drawn from bookPages and everything else from here, so a live background can keep showing.")]
+    public Sprite[] stationaryPages;
+
+    Sprite Under(int index)
+    {
+        Sprite[] set = stationaryPages != null && stationaryPages.Length == bookPages.Length ? stationaryPages : bookPages;
+        return set[index];
+    }
     public bool interactable=true;
     public bool enableShadowEffect=true;
     //When false, a swipe animation owns the curl and Update will not sample the pointer.
@@ -341,7 +349,7 @@ public class Book : MonoBehaviour {
         Right.transform.eulerAngles = new Vector3(0, 0, 0);
         Right.sprite = (currentPage < bookPages.Length - 1) ? bookPages[currentPage + 1] : background;
 
-        RightNext.sprite = (currentPage < bookPages.Length - 2) ? bookPages[currentPage + 2] : background;
+        RightNext.sprite = (currentPage < bookPages.Length - 2) ? Under(currentPage + 2) : background;
 
         LeftNext.transform.SetAsFirstSibling();
         if (enableShadowEffect) Shadow.gameObject.SetActive(true);
@@ -375,7 +383,7 @@ public class Book : MonoBehaviour {
         Left.transform.eulerAngles = new Vector3(0, 0, 0);
         Left.sprite = (currentPage >= 2) ? bookPages[currentPage - 2] : background;
 
-        LeftNext.sprite = (currentPage >= 3) ? bookPages[currentPage - 3] : background;
+        LeftNext.sprite = (currentPage >= 3) ? Under(currentPage - 3) : background;
 
         RightNext.transform.SetAsFirstSibling();
         if (enableShadowEffect) ShadowLTR.gameObject.SetActive(true);
@@ -410,8 +418,8 @@ public class Book : MonoBehaviour {
     Coroutine currentCoroutine;
     void UpdateSprites()
     {
-        LeftNext.sprite= (currentPage > 0 && currentPage <= bookPages.Length) ? bookPages[currentPage-1] : background;
-        RightNext.sprite=(currentPage>=0 &&currentPage<bookPages.Length) ? bookPages[currentPage] : background;
+        LeftNext.sprite= (currentPage > 0 && currentPage <= bookPages.Length) ? Under(currentPage-1) : background;
+        RightNext.sprite=(currentPage>=0 &&currentPage<bookPages.Length) ? Under(currentPage) : background;
     }
     public void TweenForward()
     {
