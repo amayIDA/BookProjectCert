@@ -110,6 +110,9 @@ public class BookScreens : MonoBehaviour
     bool sidesStay;
     bool rightFollows;
     int rightPageOverride = -1;
+    string lastPressedId = "";
+    [Tooltip("The first main page At A Glance shows. It then turns once more to the page after it.")]
+    public int atAGlanceFirstPage = 2;
     [Tooltip("Page shown on the right canvas when Begin Here is pressed (the book video page). The first page is 0.")]
     public int beginHereRightPage = 2;
     bool beginHereMode;
@@ -1101,6 +1104,7 @@ public class BookScreens : MonoBehaviour
     {
         if (book == null)
             return;
+        lastPressedId = "";
         int step = (book.currentPage - 1) / 2 + (next ? 1 : -1);
         if (step < 0 || step >= PageCount())
             return;
@@ -1372,6 +1376,13 @@ public class BookScreens : MonoBehaviour
     {
         if (swipeGesture)
             return;
+
+        // the same button again changes nothing; only the turn and home buttons repeat their action
+        bool repeatable = action == ButtonAction.TurnPage || action == ButtonAction.Home;
+        if (!repeatable && !string.IsNullOrEmpty(id) && id == lastPressedId)
+            return;
+        lastPressedId = repeatable ? "" : id;
+
         CancelPending();
         rightFollows = false;
         rightPageOverride = -1;
@@ -1473,18 +1484,22 @@ public class BookScreens : MonoBehaviour
         ShowStep(stepIndex, Selection(stepIndex), true);
     }
 
+    /// <summary>
+    /// At A Glance always shows the same two main pages, one after the other: pressing it again goes back to the first.
+    /// </summary>
     IEnumerator TurnMainTwice()
     {
         sidesStay = true;
         for (int turn = 0; turn < 2; turn++)
         {
-            int next = shownStep + 1;
-            if (next >= PageCount())
+            int target = atAGlanceFirstPage + turn;
+            if (target >= PageCount())
                 yield break;
-            ShowStep(next, Selection(next), true);
+            ShowStep(target, Selection(target), true);
             while (IsAnyFlipping())
                 yield return null;
-            yield return new WaitForSeconds(20f);
+            if (turn == 0)
+                yield return new WaitForSeconds(20f);
         }
     }
 

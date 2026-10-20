@@ -50683,6 +50683,7 @@ MonoBehaviour:
         after the course ends.
     bookLeft: {fileID: 0}
     bookRight: {fileID: 0}
+  atAGlanceFirstPage: 2
   beginHereRightPage: 2
   scenarioPage: 7
 --- !u!1 &1570678714

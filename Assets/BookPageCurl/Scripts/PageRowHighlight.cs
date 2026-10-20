@@ -22,6 +22,7 @@ public class PageRowHighlight : MonoBehaviour
     static PageRowHighlight active;
 
     RectMask2D mask;
+    bool revealed;
     RectMask2D verticalMask;
 
     void OnEnable()
@@ -53,6 +54,7 @@ public class PageRowHighlight : MonoBehaviour
     public void ResetRow()
     {
         StopAllCoroutines();
+        revealed = false;
         if (glow != null)
         {
             glow.gameObject.SetActive(true);
@@ -75,6 +77,7 @@ public class PageRowHighlight : MonoBehaviour
     public void Hide()
     {
         StopAllCoroutines();
+        revealed = false;
         if (glow != null)
         {
             glow.Stop();
@@ -90,6 +93,9 @@ public class PageRowHighlight : MonoBehaviour
 
     public void Show()
     {
+        // pressing the row that is already active does not restart anything
+        if (active == this && revealed)
+            return;
         if (active != null && active != this)
             active.Hide();
         active = this;
@@ -101,6 +107,7 @@ public class PageRowHighlight : MonoBehaviour
 
     IEnumerator Reveal()
     {
+        revealed = true;
         if (glow != null)
             glow.gameObject.SetActive(true);
         if (vertical != null)
