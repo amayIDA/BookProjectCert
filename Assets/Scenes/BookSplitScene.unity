@@ -4519,7 +4519,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &81001808
 RectTransform:
   m_ObjectHideFlags: 0
@@ -25184,8 +25184,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.08, y: 0.1}
   m_AnchorMax: {x: 0.92, y: 0.9}
-  m_AnchoredPosition: {x: -42, y: -81}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -42, y: -101}
+  m_SizeDelta: {x: 0, y: -40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &778517503
 CanvasGroup:
@@ -25275,7 +25275,7 @@ MonoBehaviour:
   floatAmount: 0
   floatSeconds: 5
   recorded: 1
-  restPosition: {x: -42, y: -81}
+  restPosition: {x: -42, y: -101}
   restScale: {x: 1, y: 1, z: 1}
   restRotation: 0
   restAlpha: 1
@@ -31118,7 +31118,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &956664001
 RectTransform:
   m_ObjectHideFlags: 0
@@ -46275,8 +46275,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.08, y: 0.1}
   m_AnchorMax: {x: 0.92, y: 0.9}
-  m_AnchoredPosition: {x: -42, y: -81}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -42, y: -119}
+  m_SizeDelta: {x: 0, y: -4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1457173594
 CanvasGroup:
@@ -46366,7 +46366,7 @@ MonoBehaviour:
   floatAmount: 0
   floatSeconds: 5
   recorded: 1
-  restPosition: {x: -42, y: -81}
+  restPosition: {x: -42, y: -119}
   restScale: {x: 1, y: 1, z: 1}
   restRotation: 0
   restAlpha: 1
@@ -50685,6 +50685,7 @@ MonoBehaviour:
     bookRight: {fileID: 0}
   atAGlanceFirstPage: 2
   beginHereRightPage: 2
+  beginHereMainPage: 4
   scenarioPage: 7
 --- !u!1 &1570678714
 GameObject:
@@ -57497,8 +57498,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.08, y: 0.1}
   m_AnchorMax: {x: 0.92, y: 0.9}
-  m_AnchoredPosition: {x: -42, y: -20.5}
-  m_SizeDelta: {x: 0, y: -121}
+  m_AnchoredPosition: {x: -42, y: -40.5}
+  m_SizeDelta: {x: 0, y: -161}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1789644337
 CanvasGroup:
@@ -57588,7 +57589,7 @@ MonoBehaviour:
   floatAmount: 0
   floatSeconds: 5
   recorded: 1
-  restPosition: {x: -42, y: -20.5}
+  restPosition: {x: -42, y: -40.5}
   restScale: {x: 1, y: 1, z: 1}
   restRotation: 0
   restAlpha: 1
@@ -60839,8 +60840,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.08, y: 0.1}
   m_AnchorMax: {x: 0.92, y: 0.9}
-  m_AnchoredPosition: {x: -42, y: -81}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -42, y: -101}
+  m_SizeDelta: {x: 0, y: -40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1907678409
 CanvasGroup:
@@ -60930,7 +60931,7 @@ MonoBehaviour:
   floatAmount: 0
   floatSeconds: 5
   recorded: 1
-  restPosition: {x: -42, y: -81}
+  restPosition: {x: -42, y: -101}
   restScale: {x: 1, y: 1, z: 1}
   restRotation: 0
   restAlpha: 1
@@ -61440,8 +61441,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.08, y: 0.1}
   m_AnchorMax: {x: 0.92, y: 0.9}
-  m_AnchoredPosition: {x: -42, y: -17}
-  m_SizeDelta: {x: 0, y: -116}
+  m_AnchoredPosition: {x: -42, y: -59}
+  m_SizeDelta: {x: 0, y: -124}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1931248584
 CanvasGroup:
@@ -61531,7 +61532,7 @@ MonoBehaviour:
   floatAmount: 0
   floatSeconds: 5
   recorded: 1
-  restPosition: {x: -42, y: -17}
+  restPosition: {x: -42, y: -59}
   restScale: {x: 1, y: 1, z: 1}
   restRotation: 0
   restAlpha: 1

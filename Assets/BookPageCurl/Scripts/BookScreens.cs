@@ -1176,7 +1176,7 @@ public class BookScreens : MonoBehaviour
         {
             // after a row button the spread turns by itself and the main page stays
             int to = leftIndex + (next ? 1 : -1);
-            if (to >= 1 && to < PageCount())
+            if (contextRow == "Begin Here" && to >= 1 && to < PageCount())
                 TurnSidesTo(to);
             return;
         }
@@ -1525,7 +1525,9 @@ public class BookScreens : MonoBehaviour
             // after any other button on the spread: only the spread turns, the main page stays as it is
             if (contextRow.Length > 0)
             {
-                TurnSidesTo(leftIndex + 1);
+                // only Begin Here lets the user turn the spread
+                if (contextRow == "Begin Here")
+                    TurnSidesTo(leftIndex + 1);
                 return;
             }
 
