@@ -137,6 +137,7 @@ public class BookScreens : MonoBehaviour
     Vector2 pressPosition;
     Canvas pressedCanvas;
     bool swipeGesture;
+    int lastSwipeFrame = -1;
     TMP_FontAsset font;
     Sprite knobSprite;
     Sprite whiteSprite;
@@ -216,6 +217,10 @@ public class BookScreens : MonoBehaviour
         BuildControlBooks();
         if (swipe != null && spreadSwipe != null)
             swipe.alsoFlip = new[] { spreadSwipe };
+        if (swipe != null)
+            swipe.interceptSwipe = SwipeIntercepted;
+        if (spreadSwipe != null)
+            spreadSwipe.interceptSwipe = SwipeIntercepted;
         int opening = Mathf.Clamp(startingPage, 0, PageCount() - 1);
         ShowControls(opening, Selection(opening));
         yield return null;
@@ -1143,11 +1148,39 @@ public class BookScreens : MonoBehaviour
         }
     }
 
+    bool SwipeIntercepted(bool next)
+    {
+        if (contextRow.Length == 0 && !(beginHereMode && !scenariosShown))
+            return false;
+        TurnBySwipe(next);
+        return true;
+    }
+
     void TurnBySwipe(bool next)
     {
         if (book == null)
             return;
+        if (Time.frameCount == lastSwipeFrame)
+            return;
+        lastSwipeFrame = Time.frameCount;
+        swipeGesture = false;
         lastPressedId = "";
+        CancelPending();
+        if (beginHereMode && !scenariosShown && next)
+        {
+            Press(ButtonAction.TurnPage, 0, "");
+            return;
+        }
+
+        if (contextRow.Length > 0)
+        {
+            // after a row button the spread turns by itself and the main page stays
+            int to = leftIndex + (next ? 1 : -1);
+            if (to >= 1 && to < PageCount())
+                TurnSidesTo(to);
+            return;
+        }
+
         int step = (book.currentPage - 1) / 2 + (next ? 1 : -1);
         if (step < 0 || step >= PageCount())
             return;

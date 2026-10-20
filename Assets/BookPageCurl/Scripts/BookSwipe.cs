@@ -13,6 +13,8 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     public Book mirror;
     public BookSwipe linkedSwipe;
     public BookSwipe[] alsoFlip;
+    /// <summary>Called with the swipe direction before a swipe turns the page. Return true to handle the turn elsewhere.</summary>
+    public System.Func<bool, bool> interceptSwipe;
     public int firstPage;
     public AudioClip flipSound;
     public AudioClip flipBackSound;
@@ -76,6 +78,8 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
         if (swiped)
         {
             EndCornerHold(false);
+            if (interceptSwipe != null && interceptSwipe(delta.x < 0f))
+                return;
             BeginFlip(delta.x < 0f);
             return;
         }
