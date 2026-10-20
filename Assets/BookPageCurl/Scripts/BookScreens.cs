@@ -131,6 +131,8 @@ public class BookScreens : MonoBehaviour
     bool beginHereMode;
     bool scenariosShown;
     bool scenarioPending;
+    [Range(0f, 1f), Tooltip("How solid the page is while it turns over the background video. 0 shows only the content, 1 hides the video.")]
+    public float turningPaperAlpha = 0.7f;
     [Tooltip("Index of the left and right pages (the Begin Here scenario lists) shown when the page is turned after Begin Here. The first page is 0.")]
     public int scenarioPage = 7;
     const int FirstDetailPage = 8;
@@ -648,7 +650,7 @@ public class BookScreens : MonoBehaviour
         camera.orthographicSize = height * 0.5f;
         bool clear = HasBackVideo(MainScreen());
         if (clear)
-            background = new Color(background.r, background.g, background.b, 0f);
+            background = new Color(background.r, background.g, background.b, turningPaperAlpha);
         Image paper = NewImage("Paper", root, background);
         Stretch(paper.rectTransform);
         draw(root);
@@ -1900,7 +1902,7 @@ public class BookScreens : MonoBehaviour
     {
         bool seeThrough = usePanelImage && HasBackVideo(screen);
         if (seeThrough)
-            background = new Color(background.r, background.g, background.b, 0f);
+            background = new Color(background.r, background.g, background.b, turningPaperAlpha);
         var cameraObject = new GameObject("PanelBakerCamera");
         cameraObject.transform.position = new Vector3(0f, cameraY, -10f);
         Camera camera = cameraObject.AddComponent<Camera>();
