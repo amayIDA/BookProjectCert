@@ -122,7 +122,9 @@ namespace ScreenKit
                 programme.fontSize = 52; programme.characterSpacing = 5f;
             }
             Fx.Words(programme.gameObject, MotionDirection.Bottom, 40f, Beat.Content, 0.09f, 0.6f, true);
-            s.Icon(card, "Scenario icon", ScenarioIcons[scenario], 0.962f, 0.86f, 64f, st.white, Beat.Content + 0.2f);
+            RectTransform scenarioIcon = s.Icon(card, "Scenario icon", ScenarioIcons[scenario], 0.962f, 0.86f, 64f, st.white, Beat.Content + 0.2f);
+            // the scenario icon is an animated icon: it plays once when the page appears
+            AnimatedIconTools.Convert(scenarioIcon, AnimatedIconTools.ScenarioVideos[scenario], false, st.white, new Vector2(64f, 64f), false);
             Lane lane = new Lane(Beat.Content + 0.7f);
             int widest = 0;
             foreach (string line in words[2].Split('\n'))

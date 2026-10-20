@@ -189,6 +189,8 @@ namespace ScreenKit
             picture.color = Navy;
             picture.preserveAspect = true;
             picture.raycastTarget = false;
+            // a large animated icon: loops and drifts slowly up and down
+            AnimatedIconTools.Convert(icon, AnimatedIconTools.ScenarioVideos[index], true, Navy, new Vector2(360f, 360f), true);
             MotionItem iconFade = Fx.Fade(icon.gameObject, MotionDirection.Bottom, 40f, 0.3f, 0.9f);
             iconFade.order = 0;
 
