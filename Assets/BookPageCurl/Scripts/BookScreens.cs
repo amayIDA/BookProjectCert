@@ -1493,6 +1493,16 @@ public class BookScreens : MonoBehaviour
         if (swipeGesture)
             return;
 
+        // Begin Here again plays its page once more: the video and the text come in again
+        if (action != ButtonAction.TurnPage && action != ButtonAction.Home && id == "Begin Here" && beginHereMode
+            && !IsAnyFlipping() && rightIndex == beginHereRightPage && beginHereRightPage < sceneRight.Length && sceneRight[beginHereRightPage] != null)
+        {
+            GameObject page = sceneRight[beginHereRightPage].gameObject;
+            page.SetActive(false);
+            page.SetActive(true);
+            return;
+        }
+
         // the same button again changes nothing; only the turn and home buttons repeat their action
         bool repeatable = action == ButtonAction.TurnPage || action == ButtonAction.Home;
         if (!repeatable && !string.IsNullOrEmpty(id) && id == lastPressedId)
