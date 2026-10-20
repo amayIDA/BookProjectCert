@@ -18,6 +18,8 @@ public class PageRowHighlight : MonoBehaviour
     public float verticalDuration = 0.8f;
     [Tooltip("Seconds after the click before the second highlight starts.")]
     public float verticalDelay = 0.1f;
+    [Tooltip("Seconds the highlights take to fade in while they are revealed.")]
+    public float fadeDuration = 0.6f;
 
     static PageRowHighlight active;
 
@@ -55,6 +57,7 @@ public class PageRowHighlight : MonoBehaviour
     {
         StopAllCoroutines();
         revealed = false;
+        SetFade(1f);
         if (glow != null)
         {
             glow.gameObject.SetActive(true);
@@ -113,6 +116,7 @@ public class PageRowHighlight : MonoBehaviour
         if (vertical != null)
             vertical.gameObject.SetActive(true);
         SetWipe(0f);
+        SetFade(0f);
 
         yield return null;
 
@@ -127,10 +131,11 @@ public class PageRowHighlight : MonoBehaviour
         }
 
         float t = 0f;
-        float end = Mathf.Max(wipeDuration, verticalDelay + verticalDuration);
+        float end = Mathf.Max(wipeDuration, verticalDelay + verticalDuration, fadeDuration);
         while (t < end)
         {
             t += Time.unscaledDeltaTime;
+            SetFade(Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / fadeDuration)));
             if (glow != null)
                 SetWipe(MotionEasing.Evaluate(MotionEase.AppleOut, Mathf.Clamp01(t / Mathf.Max(0.0001f, wipeDuration))));
             if (vertical != null)
@@ -140,6 +145,24 @@ public class PageRowHighlight : MonoBehaviour
 
         SetWipe(1f);
         SetVerticalWipe(1f);
+        SetFade(1f);
+    }
+
+    /// <summary>Both highlights fade in as they are revealed, so they never pop on.</summary>
+    void SetFade(float alpha)
+    {
+        if (glow != null)
+            GroupOf(glow.gameObject).alpha = alpha;
+        if (vertical != null)
+            GroupOf(vertical.gameObject).alpha = alpha;
+    }
+
+    static CanvasGroup GroupOf(GameObject go)
+    {
+        CanvasGroup group = go.GetComponent<CanvasGroup>();
+        if (group == null)
+            group = go.AddComponent<CanvasGroup>();
+        return group;
     }
 
     /// <summary>0 shows nothing, 1 shows all. The visible part grows from the top edge downward.</summary>
