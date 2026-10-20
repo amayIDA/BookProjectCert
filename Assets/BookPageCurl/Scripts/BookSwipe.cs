@@ -15,6 +15,8 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     public BookSwipe[] alsoFlip;
     /// <summary>Called with the swipe direction before a swipe turns the page. Return true to handle the turn elsewhere.</summary>
     public System.Func<bool, bool> interceptSwipe;
+    /// <summary>When this returns true the book ignores touches (for example while the pages riffle back to the beginning).</summary>
+    public System.Func<bool> blocked;
     public int firstPage;
     public AudioClip flipSound;
     public AudioClip flipBackSound;
@@ -45,7 +47,7 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (flipping || book == null)
+        if (flipping || book == null || (blocked != null && blocked()))
             return;
         tracking = true;
         pointerId = eventData.pointerId;

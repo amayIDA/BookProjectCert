@@ -229,9 +229,16 @@ public class BookScreens : MonoBehaviour
         if (swipe != null && spreadSwipe != null)
             swipe.alsoFlip = new[] { spreadSwipe };
         if (swipe != null)
+        {
             swipe.interceptSwipe = SwipeIntercepted;
+            swipe.blocked = () => riffling;
+        }
+
         if (spreadSwipe != null)
+        {
             spreadSwipe.interceptSwipe = SwipeIntercepted;
+            spreadSwipe.blocked = () => riffling;
+        }
         int opening = Mathf.Clamp(startingPage, 0, PageCount() - 1);
         ShowControls(opening, Selection(opening));
         yield return null;
@@ -1209,6 +1216,9 @@ public class BookScreens : MonoBehaviour
 
     bool SwipeIntercepted(bool next)
     {
+        // while the pages riffle back to the beginning a swipe is simply ignored
+        if (riffling)
+            return true;
         if (contextRow.Length == 0 && !(beginHereMode && !scenariosShown))
             return false;
         TurnBySwipe(next);
@@ -1217,7 +1227,7 @@ public class BookScreens : MonoBehaviour
 
     void TurnBySwipe(bool next)
     {
-        if (book == null)
+        if (book == null || riffling)
             return;
         if (Time.frameCount == lastSwipeFrame)
             return;
@@ -1602,6 +1612,8 @@ public class BookScreens : MonoBehaviour
             // Home turns the pages back to the beginning on both screens, instead of jumping there
             if (StartRiffle())
                 return;
+            if (swipe != null)
+                swipe.alsoFlip = spreadSwipe != null ? new[] { spreadSwipe } : null;
             beginHereMode = false;
             scenariosShown = false;
             contextRow = "";
@@ -1838,7 +1850,6 @@ public class BookScreens : MonoBehaviour
 
         float oldSpreadSeconds = spreadSwipe.flipDuration;
         float oldMainSeconds = swipe.flipDuration;
-        BookSwipe[] oldLinked = swipe.alsoFlip;
         spreadSwipe.flipDuration = RiffleSheetSeconds;
         swipe.flipDuration = RiffleSheetSeconds;
         swipe.alsoFlip = null;
@@ -1926,7 +1937,8 @@ public class BookScreens : MonoBehaviour
         riffleStash.Clear();
         spreadSwipe.flipDuration = oldSpreadSeconds;
         swipe.flipDuration = oldMainSeconds;
-        swipe.alsoFlip = oldLinked;
+        // at the beginning both books turn together again
+        swipe.alsoFlip = spreadSwipe != null ? new[] { spreadSwipe } : null;
         riffling = false;
         SetControlBooksActive(false);
         SetMainBookActive(false);
