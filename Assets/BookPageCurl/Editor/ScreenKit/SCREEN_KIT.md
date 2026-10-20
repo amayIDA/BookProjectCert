@@ -72,3 +72,13 @@ little later than the one before (about 0.35 s) and the screen stays calm instea
 
 Enter Play mode, activate the page, then call `Scrub(seconds)` on its `MotionSequence` and render the camera. Look at
 the start, the line, the box opening, the content and the end. At `TotalDuration` the screen must look like the design.
+
+## Displays and cameras (two displays)
+
+* **Display 1** is `SpreadCanvas` with `SpreadCamera`: the left and right pages together on one canvas, 2048x1820 inside,
+  on top of `Assets/UI/TwoPages.png`. `LeftCanvas` and `RightCanvas` are now the two halves of that spread. They kept their
+  names and their `PagePanels`, so every page, script and screen builder that uses them works as before.
+* **Display 2** is `MainCanvas` with `SingleCamera`.
+* A page turn is one `Book` over the whole spread: the right page lifts, curls across the spine and lands on the left.
+  The turn is moved by time with a soft start and end (`BookSwipe.flipDuration`, 0.9 s on the spread).
+* `Book/Setup/Merge Left And Right Into One Spread` did the conversion. It does nothing if the spread already exists.

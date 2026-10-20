@@ -16,7 +16,7 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
     public int firstPage;
     public AudioClip flipSound;
     public AudioClip flipBackSound;
-    public float flipDuration = 0.55f;
+    public float flipDuration = 0.85f;
     public int animationFrames = 28;
 
     AudioSource audioSource;
@@ -244,45 +244,50 @@ public class BookSwipe : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoin
         if (mirror != null)
             mirror.followPointer = false;
 
-        int frames = Mathf.Max(8, animationFrames);
-        float frameTime = flipDuration / frames;
         float centerX = (book.EndBottomRight.x + book.EndBottomLeft.x) * 0.5f;
         float height = Mathf.Abs(book.EndBottomRight.y) * 0.9f;
-        float step = (halfSpan * 2f) / frames;
+        float startX = next ? centerX + halfSpan : centerX - halfSpan;
+        float direction = next ? -1f : 1f;
 
+        Vector3 point = CurlPoint(startX, centerX, halfSpan, height);
         if (next)
         {
-            float x = centerX + halfSpan;
-            Vector3 point = CurlPoint(x, centerX, halfSpan, height);
             book.DragRightPageToPoint(point);
             if (mirror != null)
                 mirror.DragRightPageToPoint(point);
-            for (int i = 0; i < frames; i++)
-            {
-                point = CurlPoint(x, centerX, halfSpan, height);
-                book.UpdateBookRTLToPoint(point);
-                if (mirror != null)
-                    mirror.UpdateBookRTLToPoint(point);
-                yield return new WaitForSeconds(frameTime);
-                x -= step;
-            }
         }
         else
         {
-            float x = centerX - halfSpan;
-            Vector3 point = CurlPoint(x, centerX, halfSpan, height);
             book.DragLeftPageToPoint(point);
             if (mirror != null)
                 mirror.DragLeftPageToPoint(point);
-            for (int i = 0; i < frames; i++)
+        }
+
+        // The sheet is moved by time, not by a fixed number of steps, so it is smooth on any frame rate.
+        // It peels off slowly, speeds up across the middle and settles gently on the other side.
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.2f, flipDuration);
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            float eased = progress * progress * progress * (progress * (progress * 6f - 15f) + 10f);
+            float x = startX + direction * eased * halfSpan * 2f;
+            point = CurlPoint(x, centerX, halfSpan, height);
+            if (next)
             {
-                point = CurlPoint(x, centerX, halfSpan, height);
+                book.UpdateBookRTLToPoint(point);
+                if (mirror != null)
+                    mirror.UpdateBookRTLToPoint(point);
+            }
+            else
+            {
                 book.UpdateBookLTRToPoint(point);
                 if (mirror != null)
                     mirror.UpdateBookLTRToPoint(point);
-                yield return new WaitForSeconds(frameTime);
-                x += step;
             }
+
+            yield return null;
         }
 
         book.ReleasePage();

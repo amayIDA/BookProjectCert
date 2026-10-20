@@ -7,9 +7,10 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
-/// Display 1 and display 2 are the left and right pages of one book. Display 3 is the large book.
-/// A turn lifts the sheet on display 2 and carries it across onto display 1.
-/// Each step owns all three screens. Book pages are drawn from these steps, not from PNG files.
+/// Display 1 is the spread: the left and right pages together on one canvas (SpreadCanvas, one camera).
+/// Display 2 is the main page (MainCanvas, one camera). A turn lifts the right page, curls it across the spine
+/// and lands it on the left, while the main page turns on its own display.
+/// Each step owns both screens. Book pages are drawn from these steps, not from PNG files.
 /// </summary>
 [DefaultExecutionOrder(-50)]
 public class BookScreens : MonoBehaviour
@@ -94,12 +95,10 @@ public class BookScreens : MonoBehaviour
 
     Book book;
     BookSwipe swipe;
-    Book leftBook;
-    Book rightBook;
-    BookSwipe leftSwipe;
-    BookSwipe rightSwipe;
-    RectTransform leftView;
-    RectTransform rightView;
+    // one book spans both pages of the spread canvas, so it curls a page across the spine like a real book
+    Book spreadBook;
+    BookSwipe spreadSwipe;
+    RectTransform spreadView;
     Sprite generatedBack;
     Sprite pageShadow;
     Sprite pageShadowLtr;
@@ -197,10 +196,8 @@ public class BookScreens : MonoBehaviour
         Sprite[] pages = RenderPages();
         BuildBook(pages);
         BuildControlBooks();
-        if (swipe != null && rightSwipe != null)
-            swipe.alsoFlip = new[] { rightSwipe };
-        if (rightSwipe != null)
-            rightSwipe.mirror = leftBook;
+        if (swipe != null && spreadSwipe != null)
+            swipe.alsoFlip = new[] { spreadSwipe };
         int opening = Mathf.Clamp(startingPage, 0, PageCount() - 1);
         ShowControls(opening, Selection(opening));
         yield return null;
@@ -217,7 +214,7 @@ public class BookScreens : MonoBehaviour
         if (scenarioPending)
         {
             // only the side books turn here, so the main page is left exactly as it is
-            if (rightSwipe != null && rightSwipe.IsFlipping)
+            if (spreadSwipe != null && spreadSwipe.IsFlipping)
                 return;
             scenarioPending = false;
             SetControlBooksActive(false);
@@ -278,7 +275,7 @@ public class BookScreens : MonoBehaviour
             SetScreenUiActive(false);
             if (!sidesStay)
             {
-                swipe.alsoFlip = rightSwipe != null ? new[] { rightSwipe } : null;
+                swipe.alsoFlip = spreadSwipe != null ? new[] { spreadSwipe } : null;
                 SetControlBooksActive(true);
             }
             else
@@ -300,16 +297,13 @@ public class BookScreens : MonoBehaviour
 
     void PrepareCanvases()
     {
-        Canvas left = LeftScreen();
-        Canvas right = FindCanvas("RightCanvas");
-        Canvas single = DisplayScreen(2);
-        Fit(left, new Vector2(960f, 1080f), true);
-        KeepPageAspect(left);
-        Fit(right, new Vector2(1080f, 1080f), false);
+        Canvas spread = SpreadScreen();
+        Canvas single = MainScreen();
+        Fit(spread, new Vector2(2048f, 1820f), true);
         Fit(single, new Vector2(1080f, 1920f), true);
         FitBookSpreads(single);
-        HideOldBook(left);
-        HideOldBook(right);
+        HideOldBook(LeftHalf());
+        HideOldBook(RightHalf());
         HideOldBook(single);
     }
 
@@ -319,11 +313,34 @@ public class BookScreens : MonoBehaviour
         return go != null ? go.GetComponent<Canvas>() : null;
     }
 
-    static Canvas LeftScreen()
+    /// <summary>The one canvas that holds both pages (display 1).</summary>
+    static Canvas SpreadScreen()
     {
-        Canvas canvas = FindCanvas("MainScreen");
+        Canvas canvas = FindCanvas("SpreadCanvas");
         if (canvas == null)
             canvas = FindCanvas("LeftCanvas");
+        return canvas;
+    }
+
+    /// <summary>The left page area of the spread. It keeps the old name LeftCanvas so every page and script that uses it still works.</summary>
+    static Transform LeftHalf()
+    {
+        GameObject go = GameObject.Find("LeftCanvas");
+        return go != null ? go.transform : null;
+    }
+
+    static Transform RightHalf()
+    {
+        GameObject go = GameObject.Find("RightCanvas");
+        return go != null ? go.transform : null;
+    }
+
+    /// <summary>The main page canvas (display 2).</summary>
+    static Canvas MainScreen()
+    {
+        Canvas canvas = FindCanvas("MainCanvas");
+        if (canvas == null)
+            canvas = DisplayScreen(1);
         return canvas;
     }
 
@@ -344,16 +361,19 @@ public class BookScreens : MonoBehaviour
         return named;
     }
 
-    static Vector2 ReferenceSize(Canvas canvas)
+    static Vector2 ReferenceSize(Component canvas)
     {
         if (canvas != null)
         {
             CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler != null && scaler.referenceResolution.x > 1f && scaler.referenceResolution.y > 1f)
                 return scaler.referenceResolution;
+            RectTransform rect = canvas.transform as RectTransform;
+            if (rect != null && rect.rect.width > 2f && rect.rect.height > 2f)
+                return rect.rect.size;
         }
 
-        return new Vector2(960f, 1080f);
+        return new Vector2(1024f, 1820f);
     }
 
     static void Fit(Canvas canvas, Vector2 resolution, bool keepAspect)
@@ -371,7 +391,7 @@ public class BookScreens : MonoBehaviour
             scaler.matchWidthOrHeight = 0.5f;
     }
 
-    static Color PanelColor(Canvas canvas)
+    static Color PanelColor(Component canvas)
     {
         if (canvas != null)
         {
@@ -385,21 +405,6 @@ public class BookScreens : MonoBehaviour
         }
 
         return Screen;
-    }
-
-    static void KeepPageAspect(Canvas canvas)
-    {
-        if (canvas == null)
-            return;
-        RectTransform panels = canvas.transform.Find("PagePanels") as RectTransform;
-        if (panels == null)
-            return;
-        Vector2 size = ReferenceSize(canvas);
-        AspectRatioFitter fitter = panels.GetComponent<AspectRatioFitter>();
-        if (fitter == null)
-            fitter = panels.gameObject.AddComponent<AspectRatioFitter>();
-        fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        fitter.aspectRatio = size.x / Mathf.Max(1f, size.y);
     }
 
     static void FitBookSpreads(Canvas canvas)
@@ -422,7 +427,7 @@ public class BookScreens : MonoBehaviour
         }
     }
 
-    static void HideOldBook(Canvas canvas)
+    static void HideOldBook(Component canvas)
     {
         if (canvas == null)
             return;
@@ -455,17 +460,12 @@ public class BookScreens : MonoBehaviour
 
     void CollectScenePages()
     {
-        sceneLeft = PageList(LeftScreen());
-        sceneRight = PageList("RightCanvas");
-        sceneBook = PageList(DisplayScreen(2));
+        sceneLeft = PageList(LeftHalf());
+        sceneRight = PageList(RightHalf());
+        sceneBook = PageList(MainScreen());
     }
 
-    static RectTransform[] PageList(string canvasName)
-    {
-        return PageList(FindCanvas(canvasName));
-    }
-
-    static RectTransform[] PageList(Canvas canvas)
+    static RectTransform[] PageList(Component canvas)
     {
         if (canvas == null)
             return new RectTransform[0];
@@ -508,17 +508,12 @@ public class BookScreens : MonoBehaviour
 
     void RaisePagePanels()
     {
-        Raise(LeftScreen());
-        Raise("RightCanvas");
-        Raise(DisplayScreen(2));
+        Raise(LeftHalf());
+        Raise(RightHalf());
+        Raise(MainScreen());
     }
 
-    static void Raise(string canvasName)
-    {
-        Raise(FindCanvas(canvasName));
-    }
-
-    static void Raise(Canvas canvas)
+    static void Raise(Component canvas)
     {
         if (canvas == null)
             return;
@@ -704,7 +699,7 @@ public class BookScreens : MonoBehaviour
 
     void BuildBook(Sprite[] pages)
     {
-        Canvas canvas = DisplayScreen(2);
+        Canvas canvas = MainScreen();
         if (canvas == null || pages == null || pages.Length == 0)
             return;
 
@@ -797,26 +792,30 @@ public class BookScreens : MonoBehaviour
     void BuildControlBooks()
     {
         Canvas.ForceUpdateCanvases();
-        Canvas left = LeftScreen();
-        Canvas right = FindCanvas("RightCanvas");
-        if (left == null || right == null)
+        Canvas spread = SpreadScreen();
+        Transform left = LeftHalf();
+        Transform right = RightHalf();
+        if (spread == null || left == null || right == null)
             return;
 
         Sprite[] leftPages = BakeControlPages(true);
         Sprite[] rightPages = BakeControlPages(false);
-        Sprite[] spread = SpreadPages(leftPages, rightPages);
-        leftView = CreateControlView(left.transform, true);
-        rightView = CreateControlView(right.transform, false);
-        leftSwipe = WireBook(leftView.GetChild(0) as RectTransform, left, spread, PanelPaper(left), false, 1);
-        rightSwipe = WireBook(rightView.GetChild(0) as RectTransform, right, spread, PanelPaper(right), false, 1);
-        leftBook = leftSwipe != null ? leftSwipe.book : null;
-        rightBook = rightSwipe != null ? rightSwipe.book : null;
+        Sprite[] spreadPages = SpreadPages(leftPages, rightPages);
+        spreadView = CreateSpreadView(left.parent);
+        spreadSwipe = WireBook(spreadView.GetChild(0) as RectTransform, spread, spreadPages, PanelPaper(left), false, 1);
+        spreadBook = spreadSwipe != null ? spreadSwipe.book : null;
+        if (spreadSwipe != null)
+        {
+            // a longer, softer turn than the single page books used to have
+            spreadSwipe.flipDuration = 0.9f;
+        }
+
         SendControlBooksBack();
     }
 
     Sprite[] RenderSceneBook()
     {
-        Canvas screen = DisplayScreen(2);
+        Canvas screen = MainScreen();
         Vector2 page = PanelContentSize(screen);
         int width = Mathf.Max(8, Mathf.RoundToInt(page.x));
         int height = Mathf.Max(8, Mathf.RoundToInt(page.y));
@@ -851,7 +850,7 @@ public class BookScreens : MonoBehaviour
         RectTransform[] source = displayOne ? sceneLeft : sceneRight;
         if (source.Length > 0)
         {
-            Canvas screen = displayOne ? LeftScreen() : FindCanvas("RightCanvas");
+            Transform screen = displayOne ? LeftHalf() : RightHalf();
             Vector2 page = PanelContentSize(screen);
             int width = Mathf.RoundToInt(page.x);
             int height = Mathf.RoundToInt(page.y);
@@ -938,20 +937,19 @@ public class BookScreens : MonoBehaviour
         return pages;
     }
 
-    RectTransform CreateControlView(Transform canvas, bool leftHalf)
+    /// <summary>The page curl for the spread: one book as wide as both pages, clipped to the spread area.</summary>
+    RectTransform CreateSpreadView(Transform area)
     {
-        RectTransform view = CreateRect("ControlBook", canvas, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        RectTransform view = CreateRect("ControlBook", area, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         ZeroOffsets(view);
         view.gameObject.AddComponent<RectMask2D>();
-        // The book is one spread. Display 1 keeps the left page, display 2 keeps the right page,
-        // and the spine sits on the edge where the two screens meet.
-        Vector2 page = PanelContentSize(canvas.GetComponent<Canvas>());
-        float spineOffset = (leftHalf ? 0.5f : -0.5f) * page.x;
-        CreateRect("Book", view, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(page.x * 2f, page.y), new Vector2(spineOffset, 0f));
+        RectTransform areaRect = area as RectTransform;
+        Vector2 size = areaRect != null && areaRect.rect.width > 2f ? areaRect.rect.size : new Vector2(2048f, 1820f);
+        CreateRect("Book", view, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), size, Vector2.zero);
         return view;
     }
 
-    static Vector2 PanelContentSize(Canvas canvas)
+    static Vector2 PanelContentSize(Component canvas)
     {
         if (canvas != null)
         {
@@ -966,33 +964,33 @@ public class BookScreens : MonoBehaviour
     void AlignCurl()
     {
         Canvas.ForceUpdateCanvases();
-        AlignControl(leftView, LeftScreen(), true);
-        AlignControl(rightView, FindCanvas("RightCanvas"), false);
+        AlignSpread();
         AlignExperience();
     }
 
-    void AlignControl(RectTransform view, Canvas canvas, bool leftHalf)
+    void AlignSpread()
     {
-        if (view == null || canvas == null)
+        if (spreadView == null)
             return;
-        view.anchorMin = Vector2.zero;
-        view.anchorMax = Vector2.one;
-        view.pivot = new Vector2(0.5f, 0.5f);
-        view.offsetMin = Vector2.zero;
-        view.offsetMax = Vector2.zero;
-        view.localScale = Vector3.one;
-        view.localRotation = Quaternion.identity;
+        RectTransform area = spreadView.parent as RectTransform;
+        if (area == null)
+            return;
+        spreadView.anchorMin = Vector2.zero;
+        spreadView.anchorMax = Vector2.one;
+        spreadView.pivot = new Vector2(0.5f, 0.5f);
+        spreadView.offsetMin = Vector2.zero;
+        spreadView.offsetMax = Vector2.zero;
+        spreadView.localScale = Vector3.one;
+        spreadView.localRotation = Quaternion.identity;
         Canvas.ForceUpdateCanvases();
-        RectTransform bookRect = view.childCount > 0 ? view.GetChild(0) as RectTransform : null;
+        RectTransform bookRect = spreadView.childCount > 0 ? spreadView.GetChild(0) as RectTransform : null;
         if (bookRect == null)
             return;
-        float width = view.rect.width;
-        float height = view.rect.height;
         bookRect.anchorMin = new Vector2(0.5f, 0.5f);
         bookRect.anchorMax = new Vector2(0.5f, 0.5f);
         bookRect.pivot = new Vector2(0.5f, 0.5f);
-        bookRect.sizeDelta = new Vector2(width * 2f, height);
-        bookRect.anchoredPosition = new Vector2((leftHalf ? 0.5f : -0.5f) * width, 0f);
+        bookRect.sizeDelta = new Vector2(spreadView.rect.width, spreadView.rect.height);
+        bookRect.anchoredPosition = Vector2.zero;
         Book curled = bookRect.GetComponent<Book>();
         if (curled != null)
             curled.Reflow();
@@ -1002,7 +1000,7 @@ public class BookScreens : MonoBehaviour
     {
         if (book == null)
             return;
-        Canvas canvas = DisplayScreen(2);
+        Canvas canvas = MainScreen();
         RectTransform canvasRect = canvas != null ? canvas.transform as RectTransform : null;
         if (canvasRect == null)
             return;
@@ -1108,13 +1106,8 @@ public class BookScreens : MonoBehaviour
 
     Canvas CanvasAt(Vector2 screen)
     {
-        Canvas left = LeftScreen();
-        Canvas right = FindCanvas("RightCanvas");
-        if (OverCanvas(left, screen))
-            return left;
-        if (OverCanvas(right, screen))
-            return right;
-        return null;
+        Canvas spread = SpreadScreen();
+        return OverCanvas(spread, screen) ? spread : null;
     }
 
     static bool OverCanvas(Canvas canvas, Vector2 screen)
@@ -1128,9 +1121,7 @@ public class BookScreens : MonoBehaviour
     {
         if (swipe != null && swipe.IsFlipping)
             return true;
-        if (leftSwipe != null && leftSwipe.IsFlipping)
-            return true;
-        if (rightSwipe != null && rightSwipe.IsFlipping)
+        if (spreadSwipe != null && spreadSwipe.IsFlipping)
             return true;
         return false;
     }
@@ -1143,10 +1134,8 @@ public class BookScreens : MonoBehaviour
             return;
         int step = Mathf.Max(0, (page - 1) / 2);
         int sidePage = step * 2 + 1;
-        if (leftBook != null)
-            leftBook.SnapToPage(sidePage);
-        if (rightBook != null)
-            rightBook.SnapToPage(sidePage);
+        if (spreadBook != null)
+            spreadBook.SnapToPage(sidePage);
     }
 
     void SetScreenUiActive(bool active)
@@ -1166,16 +1155,11 @@ public class BookScreens : MonoBehaviour
             return;
         }
 
-        SetUiActive(LeftScreen(), active);
-        SetUiActive("RightCanvas", active);
+        SetUiActive(LeftHalf(), active);
+        SetUiActive(RightHalf(), active);
     }
 
-    static void SetUiActive(string canvasName, bool active)
-    {
-        SetUiActive(FindCanvas(canvasName), active);
-    }
-
-    static void SetUiActive(Canvas canvas, bool active)
+    static void SetUiActive(Component canvas, bool active)
     {
         if (canvas == null)
             return;
@@ -1197,28 +1181,22 @@ public class BookScreens : MonoBehaviour
 
     void SetControlBooksActive(bool active)
     {
-        if (leftView != null)
-            leftView.gameObject.SetActive(active);
-        if (rightView != null)
-            rightView.gameObject.SetActive(active);
+        if (spreadView != null)
+            spreadView.gameObject.SetActive(active);
         if (active)
             BringControlBooksToFront();
     }
 
     void BringControlBooksToFront()
     {
-        if (leftView != null)
-            leftView.SetAsLastSibling();
-        if (rightView != null)
-            rightView.SetAsLastSibling();
+        if (spreadView != null)
+            spreadView.SetAsLastSibling();
     }
 
     void SendControlBooksBack()
     {
-        if (leftView != null)
-            leftView.SetSiblingIndex(1);
-        if (rightView != null)
-            rightView.SetSiblingIndex(1);
+        if (spreadView != null)
+            spreadView.SetSiblingIndex(1);
     }
 
     void ShowControls(int stepIndex, string selected)
@@ -1230,12 +1208,12 @@ public class BookScreens : MonoBehaviour
         }
 
         Step step = steps[Mathf.Clamp(stepIndex, 0, steps.Count - 1)];
-        Canvas left = LeftScreen();
-        Canvas right = FindCanvas("RightCanvas");
+        Transform left = LeftHalf();
+        Transform right = RightHalf();
         if (left != null)
-            BuildDisplayOne(left.transform, step, selected);
+            BuildDisplayOne(left, step, selected);
         if (right != null)
-            BuildDisplayTwo(right.transform, step);
+            BuildDisplayTwo(right, step);
     }
 
     void BuildDisplayOne(Transform canvas, Step step, string selected)
@@ -1374,10 +1352,8 @@ public class BookScreens : MonoBehaviour
         bool flipping = IsAnyFlipping();
         if (swipe != null)
             swipe.CancelFlip();
-        if (leftSwipe != null)
-            leftSwipe.CancelFlip();
-        if (rightSwipe != null)
-            rightSwipe.CancelFlip();
+        if (spreadSwipe != null)
+            spreadSwipe.CancelFlip();
         if (!flipping)
             return;
 
@@ -1458,7 +1434,7 @@ public class BookScreens : MonoBehaviour
     /// </summary>
     void ShowScenarioPages()
     {
-        if (rightSwipe == null || leftBook == null || rightBook == null || sceneLeft.Length <= scenarioPage || sceneRight.Length <= scenarioPage)
+        if (spreadSwipe == null || spreadBook == null || sceneLeft.Length <= scenarioPage || sceneRight.Length <= scenarioPage)
             return;
         sidesStay = true;
         scenariosShown = true;
@@ -1467,9 +1443,8 @@ public class BookScreens : MonoBehaviour
         ActivateOnly(sceneLeft, -1);
         ActivateOnly(sceneRight, -1);
         SetControlBooksActive(true);
-        leftBook.SnapToPage(sidePage - 2);
-        rightBook.SnapToPage(sidePage - 2);
-        rightSwipe.BeginFlip(true);
+        spreadBook.SnapToPage(sidePage - 2);
+        spreadSwipe.BeginFlip(true);
     }
 
     /// <summary>
@@ -1631,7 +1606,7 @@ public class BookScreens : MonoBehaviour
         return sprite;
     }
 
-    static Image PanelImage(Canvas canvas)
+    static Image PanelImage(Component canvas)
     {
         if (canvas == null)
             return null;
@@ -1639,13 +1614,13 @@ public class BookScreens : MonoBehaviour
         return panel != null ? panel.GetComponent<Image>() : null;
     }
 
-    Sprite PanelPaper(Canvas canvas)
+    Sprite PanelPaper(Component canvas)
     {
         Vector2 page = ReferenceSize(canvas);
         return BakePanel(null, Mathf.RoundToInt(page.x), Mathf.RoundToInt(page.y), canvas, 7200f);
     }
 
-    void StampPanel(RectTransform root, Canvas canvas)
+    void StampPanel(RectTransform root, Component canvas)
     {
         Image source = PanelImage(canvas);
         Image paper = NewImage("Paper", root, source != null ? source.color : Screen);
@@ -1664,12 +1639,12 @@ public class BookScreens : MonoBehaviour
         return BakePanel(source, width, height, null, background, cameraY, false);
     }
 
-    Sprite BakePanel(RectTransform source, int width, int height, Canvas screen, float cameraY)
+    Sprite BakePanel(RectTransform source, int width, int height, Component screen, float cameraY)
     {
         return BakePanel(source, width, height, screen, PanelColor(screen), cameraY, true);
     }
 
-    Sprite BakePanel(RectTransform source, int width, int height, Canvas screen, Color background, float cameraY, bool usePanelImage)
+    Sprite BakePanel(RectTransform source, int width, int height, Component screen, Color background, float cameraY, bool usePanelImage)
     {
         var cameraObject = new GameObject("PanelBakerCamera");
         cameraObject.transform.position = new Vector3(0f, cameraY, -10f);
