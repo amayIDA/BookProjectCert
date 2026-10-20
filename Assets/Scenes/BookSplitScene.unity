@@ -1867,10 +1867,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 227894567}
   vertical: {fileID: 1097582556}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!1 &21488975
 GameObject:
   m_ObjectHideFlags: 0
@@ -5872,10 +5872,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 368155367}
   vertical: {fileID: 1263561924}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!1 &152632019
 GameObject:
   m_ObjectHideFlags: 0
@@ -7972,8 +7972,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -10869,10 +10869,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 1559929373}
   vertical: {fileID: 158569800}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!1 &347866802
 GameObject:
   m_ObjectHideFlags: 0
@@ -12311,8 +12311,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -13659,8 +13659,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -16656,10 +16656,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 1171704607}
   vertical: {fileID: 1161370482}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!114 &533072294
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25443,10 +25443,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 2033800520}
   vertical: {fileID: 731293405}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!114 &779552746
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30376,10 +30376,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 401329275}
   vertical: {fileID: 166332458}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!114 &924886481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36785,10 +36785,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 1785946586}
   vertical: {fileID: 769656593}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!114 &1161291989
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37330,8 +37330,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -39676,8 +39676,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -42939,10 +42939,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 1265180248}
   vertical: {fileID: 1526585470}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!1 &1371641466
 GameObject:
   m_ObjectHideFlags: 0
@@ -50430,8 +50430,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -57372,8 +57372,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -57899,10 +57899,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PageRowHighlight
   glow: {fileID: 1959886333}
   vertical: {fileID: 131305324}
-  wipeDuration: 1.2
-  verticalDuration: 1.5
-  verticalDelay: 0.25
-  fadeDuration: 1.3
+  wipeDuration: 2.4
+  verticalDuration: 2.4
+  verticalDelay: 0.4
+  fadeDuration: 2
 --- !u!114 &1794342741
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62245,8 +62245,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
@@ -64235,8 +64235,8 @@ MonoBehaviour:
   order: 0
   delay: 0
   label: 
-  duration: 1.4
-  ease: 17
+  duration: 2.6
+  ease: 3
   growFrom: 1
   fadeFrom: 0
   fadeDuration: 0.45
