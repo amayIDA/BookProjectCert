@@ -121,6 +121,7 @@ public class BookScreens : MonoBehaviour
     int leftIndex;
     int rightIndex;
     int sidesTurnTarget = -1;
+    int sidesTurnRight = -1;
     string contextRow = "";
     Sprite[] leftBaked;
     Sprite[] rightBaked;
@@ -1175,9 +1176,19 @@ public class BookScreens : MonoBehaviour
         if (contextRow.Length > 0)
         {
             // after a row button the spread turns by itself and the main page stays
-            int to = leftIndex + (next ? 1 : -1);
-            if (contextRow == "Begin Here" && to >= 1 && to < PageCount())
-                TurnSidesTo(to);
+            if (contextRow != "Begin Here")
+                return;
+            if (next)
+            {
+                if (leftIndex + 1 < PageCount())
+                    TurnSidesTo(leftIndex + 1);
+            }
+            else if (leftIndex > ButtonsPage)
+            {
+                // back from the lists to the Begin Here pages
+                scenariosShown = false;
+                TurnSidesBack(ButtonsPage, beginHereRightPage);
+            }
             return;
         }
 
@@ -1462,13 +1473,14 @@ public class BookScreens : MonoBehaviour
         if (sidesTurnTarget >= 0)
         {
             leftIndex = sidesTurnTarget;
-            rightIndex = sidesTurnTarget;
+            rightIndex = sidesTurnRight >= 0 ? sidesTurnRight : sidesTurnTarget;
             ActivateOnly(sceneLeft, leftIndex);
             ActivateOnly(sceneRight, rightIndex);
             if (spreadBook != null)
                 spreadBook.SnapToPage(leftIndex * 2 + 1);
         }
 
+        sidesTurnRight = -1;
         if (book != null)
         {
             // the main page stays up, even if the turn was interrupted before it was shown
@@ -1611,6 +1623,36 @@ public class BookScreens : MonoBehaviour
         SetControlBooksActive(true);
         spreadBook.SnapToPage(spread * 2 + 1);
         spreadSwipe.BeginFlip(true);
+    }
+
+    /// <summary>Turns the spread back one page: the left page lifts across the spine and the earlier pages are uncovered.</summary>
+    void TurnSidesBack(int toLeft, int toRight)
+    {
+        if (spreadSwipe == null || spreadBook == null || leftBaked == null || leftIndex < 1 || toLeft < 0 || toLeft >= leftBaked.Length || toRight >= rightBaked.Length)
+            return;
+        sidesStay = true;
+        scenarioPending = true;
+        sidesTurnTarget = toLeft;
+        sidesTurnRight = toRight;
+
+        int spread = leftIndex;
+        Sprite[] faces = spreadBook.bookPages;
+        RestoreFaces();
+        // the earlier spread in the book is dressed as the pages we are going back to
+        stashedSpread = spread - 1;
+        stashedLeft = faces[stashedSpread * 2];
+        stashedRight = faces[stashedSpread * 2 + 1];
+        faces[stashedSpread * 2] = leftBaked[toLeft];
+        faces[stashedSpread * 2 + 1] = rightBaked[toRight];
+        // the right page that stays is the one on screen now
+        spreadBook.bookPages[spread * 2 + 1] = rightBaked[Mathf.Clamp(rightIndex, 0, rightBaked.Length - 1)];
+        spreadBook.bookPages[spread * 2] = leftBaked[Mathf.Clamp(leftIndex, 0, leftBaked.Length - 1)];
+
+        ActivateOnly(sceneLeft, -1);
+        ActivateOnly(sceneRight, -1);
+        SetControlBooksActive(true);
+        spreadBook.SnapToPage(spread * 2 + 1);
+        spreadSwipe.BeginFlip(false);
     }
 
     void RestoreFaces()
