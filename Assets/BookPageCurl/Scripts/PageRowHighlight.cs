@@ -13,13 +13,13 @@ public class PageRowHighlight : MonoBehaviour
     public MotionGlow glow;
     public AxisReveal vertical;
     [Tooltip("Seconds the gradient takes to reveal from the top down.")]
-    public float wipeDuration = 0.5f;
+    public float wipeDuration = 1.2f;
     [Tooltip("The second highlight (the thin line) is drawn from the top down by this component, not by its own animation.")]
-    public float verticalDuration = 0.8f;
+    public float verticalDuration = 1.5f;
     [Tooltip("Seconds after the click before the second highlight starts.")]
-    public float verticalDelay = 0.1f;
+    public float verticalDelay = 0.25f;
     [Tooltip("Seconds the highlights take to fade in while they are revealed.")]
-    public float fadeDuration = 0.6f;
+    public float fadeDuration = 1.3f;
 
     static PageRowHighlight active;
 
@@ -137,7 +137,7 @@ public class PageRowHighlight : MonoBehaviour
             t += Time.unscaledDeltaTime;
             SetFade(Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / fadeDuration)));
             if (glow != null)
-                SetWipe(MotionEasing.Evaluate(MotionEase.AppleOut, Mathf.Clamp01(t / Mathf.Max(0.0001f, wipeDuration))));
+                SetWipe(MotionEasing.Evaluate(MotionEase.AppleInOut, Mathf.Clamp01(t / Mathf.Max(0.0001f, wipeDuration))));
             if (vertical != null)
                 SetVerticalWipe(MotionEasing.Evaluate(MotionEase.AppleInOut, Mathf.Clamp01((t - verticalDelay) / Mathf.Max(0.0001f, verticalDuration))));
             yield return null;
