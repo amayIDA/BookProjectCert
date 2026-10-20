@@ -108,13 +108,25 @@ public class BookScreens : MonoBehaviour
     string shownSelected = "";
     bool controlsDirty;
     bool sidesStay;
-    bool rightFollows;
-    int rightPageOverride = -1;
     string lastPressedId = "";
     [Tooltip("The first main page At A Glance shows. It then turns once more to the page after it.")]
     public int atAGlanceFirstPage = 2;
     [Tooltip("Page shown on the right canvas when Begin Here is pressed (the book video page). The first page is 0.")]
     public int beginHereRightPage = 2;
+    [Tooltip("Main page shown when the page is turned after Begin Here. The first page is 0.")]
+    public int beginHereMainPage = 4;
+    const int ButtonsPage = 1;
+
+    // the pages on the spread: left and right can differ (for example Begin Here shows a different right page)
+    int leftIndex;
+    int rightIndex;
+    int sidesTurnTarget = -1;
+    string contextRow = "";
+    Sprite[] leftBaked;
+    Sprite[] rightBaked;
+    Sprite stashedLeft;
+    Sprite stashedRight;
+    int stashedSpread = -1;
     bool beginHereMode;
     bool scenariosShown;
     bool scenarioPending;
@@ -219,22 +231,10 @@ public class BookScreens : MonoBehaviour
         TrackSwipe();
         if (scenarioPending)
         {
-            // only the side books turn here, so the main page is left exactly as it is
-            if (spreadSwipe != null && spreadSwipe.IsFlipping)
+            // the spread is turning (and the main page too when Begin Here was followed by a turn): wait for both
+            if ((spreadSwipe != null && spreadSwipe.IsFlipping) || (swipe != null && swipe.IsFlipping))
                 return;
-            scenarioPending = false;
-            SetControlBooksActive(false);
-            ActivateOnly(sceneLeft, scenarioPage);
-            ActivateOnly(sceneRight, scenarioPage);
-            if (book != null)
-            {
-                // the main page stays up even if the turn was interrupted before the main page was shown
-                shownStep = Mathf.Clamp((book.currentPage - 1) / 2, 0, PageCount() - 1);
-                ActivateOnly(sceneBook, shownStep);
-                SetMainBookActive(false);
-            }
-
-            RaisePagePanels();
+            FinishSidesTurn();
             return;
         }
 
@@ -494,11 +494,52 @@ public class BookScreens : MonoBehaviour
         {
             ActivateOnly(sceneLeft, index);
             ActivateOnly(sceneRight, index);
+            leftIndex = index;
+            rightIndex = index;
         }
-        else if (rightFollows)
-            ActivateOnly(sceneRight, rightPageOverride >= 0 ? rightPageOverride : index);
+
         ActivateOnly(sceneBook, index);
         RaisePagePanels();
+    }
+
+    /// <summary>Shows these pages on the spread right now and keeps the page curl book on the same spread.</summary>
+    void SetSides(int left, int right)
+    {
+        int count = Mathf.Max(1, PageCount());
+        left = Mathf.Clamp(left, 0, count - 1);
+        right = Mathf.Clamp(right, 0, count - 1);
+        bool rightChanged = right != rightIndex;
+        leftIndex = left;
+        rightIndex = right;
+        ActivateOnly(sceneLeft, left);
+        ActivateOnly(sceneRight, right);
+        if (spreadBook != null)
+            spreadBook.SnapToPage(left * 2 + 1);
+        RaisePagePanels();
+        if (rightChanged && right >= 0 && right < sceneRight.Length && sceneRight[right] != null)
+            StartCoroutine(FadePageIn(sceneRight[right]));
+    }
+
+    /// <summary>A soft fade for a page that appears by itself, so it never just pops in.</summary>
+    IEnumerator FadePageIn(RectTransform page)
+    {
+        CanvasGroup group = page.GetComponent<CanvasGroup>();
+        if (group == null)
+            group = page.gameObject.AddComponent<CanvasGroup>();
+        group.alpha = 0f;
+        float t = 0f;
+        const float duration = 0.4f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            if (group == null)
+                yield break;
+            group.alpha = Mathf.SmoothStep(0f, 1f, t / duration);
+            yield return null;
+        }
+
+        if (group != null)
+            group.alpha = 1f;
     }
 
     static void ActivateOnly(RectTransform[] pages, int index)
@@ -806,6 +847,8 @@ public class BookScreens : MonoBehaviour
 
         Sprite[] leftPages = BakeControlPages(true);
         Sprite[] rightPages = BakeControlPages(false);
+        leftBaked = leftPages;
+        rightBaked = rightPages;
         Sprite[] spreadPages = SpreadPages(leftPages, rightPages);
         spreadView = CreateSpreadView(left.parent);
         spreadSwipe = WireBook(spreadView.GetChild(0) as RectTransform, spread, spreadPages, PanelPaper(left), false, 1);
@@ -1361,6 +1404,8 @@ public class BookScreens : MonoBehaviour
             swipe.CancelFlip();
         if (spreadSwipe != null)
             spreadSwipe.CancelFlip();
+        if (scenarioPending)
+            FinishSidesTurn();
         if (!flipping)
             return;
 
@@ -1370,6 +1415,44 @@ public class BookScreens : MonoBehaviour
         shownStep = Mathf.Clamp((lastTargetPage - 1) / 2, 0, PageCount() - 1);
         SetControlBooksActive(false);
         SetMainBookActive(false);
+        // the main page stays up, even when the new click does not change it
+        ActivateOnly(sceneBook, shownStep);
+        RaisePagePanels();
+    }
+
+    /// <summary>Ends a turn of the spread: the new pages are shown and the page curl is put away.</summary>
+    void FinishSidesTurn()
+    {
+        scenarioPending = false;
+        RestoreFaces();
+        SetControlBooksActive(false);
+        if (sidesTurnTarget >= 0)
+        {
+            leftIndex = sidesTurnTarget;
+            rightIndex = sidesTurnTarget;
+            ActivateOnly(sceneLeft, leftIndex);
+            ActivateOnly(sceneRight, rightIndex);
+            if (spreadBook != null)
+                spreadBook.SnapToPage(leftIndex * 2 + 1);
+        }
+
+        if (book != null)
+        {
+            // the main page stays up, even if the turn was interrupted before it was shown
+            shownStep = Mathf.Clamp((book.currentPage - 1) / 2, 0, PageCount() - 1);
+            ActivateOnly(sceneBook, shownStep);
+            SetMainBookActive(false);
+        }
+
+        RaisePagePanels();
+    }
+
+    static bool IsRow(string id)
+    {
+        return string.Equals(id, "Begin Here", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(id, "At A Glance", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(id, "Seal Of Approval", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase);
     }
 
     void Press(ButtonAction action, int step, string id)
@@ -1384,30 +1467,12 @@ public class BookScreens : MonoBehaviour
         lastPressedId = repeatable ? "" : id;
 
         CancelPending();
-        rightFollows = false;
-        rightPageOverride = -1;
-        scenarioPending = false;
-
-        // after Begin Here, turning the page shows the scenario lists on the left and right canvas
-        if (action == ButtonAction.TurnPage && beginHereMode && !scenariosShown)
-        {
-            ShowScenarioPages();
-            return;
-        }
-
-        if (scenariosShown && book != null)
-        {
-            // the side books are on the scenario pages: bring them back in step with the main book first
-            sidesStay = false;
-            SnapAll(book.currentPage);
-            SetControlBooksActive(false);
-        }
-
-        beginHereMode = false;
-        scenariosShown = false;
 
         if (action == ButtonAction.Home)
         {
+            beginHereMode = false;
+            scenariosShown = false;
+            contextRow = "";
             sidesStay = false;
             ShowStep(0, "", false);
             return;
@@ -1415,6 +1480,22 @@ public class BookScreens : MonoBehaviour
 
         if (action == ButtonAction.TurnPage)
         {
+            // after Begin Here: the left and right canvas turn to the scenario lists and the main page turns with them
+            if (beginHereMode && !scenariosShown)
+            {
+                scenariosShown = true;
+                TurnMainOnly(beginHereMainPage);
+                TurnSidesTo(scenarioPage);
+                return;
+            }
+
+            // after any other button on the spread: only the spread turns, the main page stays as it is
+            if (contextRow.Length > 0)
+            {
+                TurnSidesTo(leftIndex + 1);
+                return;
+            }
+
             sidesStay = false;
             int next = book == null ? 0 : (book.currentPage - 1) / 2 + 1;
             if (next >= PageCount())
@@ -1423,21 +1504,34 @@ public class BookScreens : MonoBehaviour
             return;
         }
 
-        if (string.Equals(id, "Begin Here", System.StringComparison.OrdinalIgnoreCase)
-            || string.Equals(id, "Seal Of Approval", System.StringComparison.OrdinalIgnoreCase)
+        beginHereMode = false;
+        scenariosShown = false;
+        contextRow = IsRow(id) ? id : "";
+
+        if (string.Equals(id, "Begin Here", System.StringComparison.OrdinalIgnoreCase))
+        {
+            // only the right canvas changes: the book animation page. The main page is left alone.
+            beginHereMode = true;
+            sidesStay = true;
+            SetSides(ButtonsPage, beginHereRightPage);
+            return;
+        }
+
+        if (string.Equals(id, "Seal Of Approval", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase))
         {
-            // Get In Touch also puts the thank you screen on the right canvas, the left canvas stays
-            bool begin = string.Equals(id, "Begin Here", System.StringComparison.OrdinalIgnoreCase);
-            rightFollows = begin || string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase);
-            rightPageOverride = begin ? beginHereRightPage : -1;
-            beginHereMode = begin;
+            // the main page turns to its page, the spread keeps the buttons page; Get In Touch also shows the thank you page on the right
+            bool touch = string.Equals(id, "Get In Touch", System.StringComparison.OrdinalIgnoreCase);
+            sidesStay = true;
+            SetSides(ButtonsPage, touch ? step : ButtonsPage);
             TurnMainOnly(step);
             return;
         }
 
         if (string.Equals(id, "At A Glance", System.StringComparison.OrdinalIgnoreCase))
         {
+            sidesStay = true;
+            SetSides(ButtonsPage, ButtonsPage);
             mainTwice = StartCoroutine(TurnMainTwice());
             return;
         }
@@ -1447,21 +1541,44 @@ public class BookScreens : MonoBehaviour
     }
 
     /// <summary>
-    /// Turns the left and right books (not the main book) to the scenario pages with one page turn.
+    /// Turns the spread (not the main book) to the pages at this index with one page curl.
+    /// The sheet that lifts shows the pages that are on screen now, and its back and what it uncovers are the new pages.
     /// </summary>
-    void ShowScenarioPages()
+    void TurnSidesTo(int to)
     {
-        if (spreadSwipe == null || spreadBook == null || sceneLeft.Length <= scenarioPage || sceneRight.Length <= scenarioPage)
+        if (spreadSwipe == null || spreadBook == null || leftBaked == null || to < 1 || to >= sceneLeft.Length || to >= sceneRight.Length)
             return;
         sidesStay = true;
-        scenariosShown = true;
         scenarioPending = true;
-        int sidePage = scenarioPage * 2 + 1;
+        sidesTurnTarget = to;
+
+        int spread = to - 1;
+        Sprite[] faces = spreadBook.bookPages;
+        RestoreFaces();
+        stashedSpread = spread;
+        stashedLeft = faces[spread * 2];
+        stashedRight = faces[spread * 2 + 1];
+        faces[spread * 2] = leftBaked[Mathf.Clamp(leftIndex, 0, leftBaked.Length - 1)];
+        faces[spread * 2 + 1] = rightBaked[Mathf.Clamp(rightIndex, 0, rightBaked.Length - 1)];
+
         ActivateOnly(sceneLeft, -1);
         ActivateOnly(sceneRight, -1);
         SetControlBooksActive(true);
-        spreadBook.SnapToPage(sidePage - 2);
+        spreadBook.SnapToPage(spread * 2 + 1);
         spreadSwipe.BeginFlip(true);
+    }
+
+    void RestoreFaces()
+    {
+        if (stashedSpread < 0 || spreadBook == null || spreadBook.bookPages == null)
+        {
+            stashedSpread = -1;
+            return;
+        }
+
+        spreadBook.bookPages[stashedSpread * 2] = stashedLeft;
+        spreadBook.bookPages[stashedSpread * 2 + 1] = stashedRight;
+        stashedSpread = -1;
     }
 
     /// <summary>
