@@ -1617,7 +1617,9 @@ public class BookScreens : MonoBehaviour
             if (beginHereMode && !scenariosShown)
             {
                 scenariosShown = true;
-                TurnMainOnly(beginHereMainPage);
+                // the main canvas is already on its Begin Here page; only the spread turns to the lists
+                if (shownStep != beginHereMainPage)
+                    TurnMainOnly(beginHereMainPage);
                 TurnSidesTo(scenarioPage);
                 return;
             }
@@ -1666,10 +1668,11 @@ public class BookScreens : MonoBehaviour
 
         if (string.Equals(id, "Begin Here", System.StringComparison.OrdinalIgnoreCase))
         {
-            // only the right canvas changes: the book animation page. The main page is left alone.
+            // the right canvas shows the book animation page and the main canvas turns to "How this work?"
             beginHereMode = true;
             sidesStay = true;
             SetSides(ButtonsPage, beginHereRightPage);
+            TurnMainOnly(beginHereMainPage);
             return;
         }
 
